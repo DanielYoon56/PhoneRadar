@@ -212,7 +212,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onSwitchUser 
             API 호출량 제한 (Rate Limiting)
           </div>
           <p className="text-xs text-slate-500 leading-relaxed">
-            비정상적인 요청 폭주와 AI Vision 비용 누수를 차단하기 위해 IP별 분당 호출 제한 및 페이로드 크기(5MB) 제한을 강제합니다.
+            비정상적인 요청 폭주와 AI Vision 비용 누수를 차단하기 위해 IP별 분당 호출 제한 및 페이로드 크기(25MB, 실사 사진 업로드 지원) 제한을 강제합니다.
           </p>
           <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
             <div className="flex items-center justify-between text-slate-600">
@@ -225,7 +225,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onSwitchUser 
             </div>
             <div className="flex items-center justify-between text-slate-600">
               <span>요청 바디 크기 상한:</span>
-              <span className="font-semibold text-slate-900">5 MB</span>
+              <span className="font-semibold text-slate-900">25 MB (서버 설정 일치)</span>
             </div>
           </div>
         </div>
@@ -419,7 +419,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onSwitchUser 
             <div>
               <strong className="text-emerald-900">9. API 입력 스키마 검증 및 호출량 제한</strong>
               <p className="text-emerald-700 text-[11px]">
-                rateLimiter(분당 120회/15회), 5MB 제한, 필수 필드 유효성 검사 적용.
+                rateLimiter(분당 120회/15회), 25MB 바디 제한(server.ts 일치), 필수 필드 유효성 검사 적용.
               </p>
             </div>
           </div>

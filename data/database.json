@@ -1,0 +1,716 @@
+{
+  "users": [
+    {
+      "id": "user-seller-1",
+      "name": "김민수 (개인 판매자)",
+      "email": "seller@example.com",
+      "role": "SELLER",
+      "subscriptionTier": "BASIC",
+      "monthlyAnalysisCount": 4,
+      "monthlyQuota": 30
+    },
+    {
+      "id": "user-dealer-1",
+      "name": "강남 모바일 유통 (딜러)",
+      "email": "dealer@example.com",
+      "role": "DEALER",
+      "subscriptionTier": "PRO",
+      "monthlyAnalysisCount": 42,
+      "monthlyQuota": 120
+    },
+    {
+      "id": "user-exporter-1",
+      "name": "동남아 무역상사 (수출업자)",
+      "email": "export@example.com",
+      "role": "EXPORTER",
+      "subscriptionTier": "ENTERPRISE",
+      "monthlyAnalysisCount": 215,
+      "monthlyQuota": 9999
+    },
+    {
+      "id": "user-admin-1",
+      "name": "시스템 최고 관리자",
+      "email": "admin@phonecheck.ai",
+      "role": "ADMIN",
+      "subscriptionTier": "ENTERPRISE",
+      "monthlyAnalysisCount": 999,
+      "monthlyQuota": 99999
+    }
+  ],
+  "devices": [
+    {
+      "id": "dev-1",
+      "userId": "user-seller-1",
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "canonicalId": "apple-iphone-15-pro",
+      "modelNumber": "A3102",
+      "storage": "256GB",
+      "color": "내추럴 티타늄",
+      "releaseYear": 2023,
+      "telecom": "자급제",
+      "imeiHash": "8642****391",
+      "batteryHealthUserReported": 91,
+      "conditionGradeEstimated": "A",
+      "status": "REPORT_READY",
+      "createdAt": "2026-09-14T10:20:00Z",
+      "updatedAt": "2026-09-16T15:51:05.961Z",
+      "askingPrice": 1140000,
+      "buyPrice": 980000,
+      "referencePrice": 1150000,
+      "infoSufficiencyScore": 100,
+      "shareToken": "test-expired-token-xyz",
+      "shareExpiresAt": "2023-01-01T00:00:00.000Z",
+      "shareIsRevoked": false,
+      "shareAccessCount": 5,
+      "images": [
+        {
+          "id": "img-1",
+          "deviceId": "dev-1",
+          "url": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80",
+          "angle": "FRONT",
+          "uploadedAt": "2026-09-14T10:22:00Z",
+          "analysisMethod": "GEMINI_VISION_API",
+          "isFallback": false,
+          "qualityAnalysis": {
+            "score": 95,
+            "isAcceptable": true,
+            "issues": [],
+            "isFallback": false
+          },
+          "visualObservations": [
+            {
+              "category": "screen",
+              "observation": "전면 액정 균열 없음, 강화유리 미부착 상태로 미세 실기스 1곳 관찰됨",
+              "severity": "MINOR",
+              "confidence": 0.92,
+              "status": "AI_OBSERVED",
+              "requiresAdditionalCheck": true,
+              "checkRecommendation": "흰색 화면에서 번인 잔상 및 터치 감도 실물 확인 필요",
+              "isFallback": false,
+              "analysisMethod": "GEMINI_VISION_API"
+            }
+          ]
+        },
+        {
+          "id": "img-2",
+          "deviceId": "dev-1",
+          "url": "https://images.unsplash.com/photo-1695048065059-8ff7c503460d?w=800&auto=format&fit=crop&q=80",
+          "angle": "BACK",
+          "uploadedAt": "2026-09-14T10:23:00Z",
+          "analysisMethod": "GEMINI_VISION_API",
+          "isFallback": false,
+          "qualityAnalysis": {
+            "score": 92,
+            "isAcceptable": true,
+            "issues": [],
+            "isFallback": false
+          },
+          "visualObservations": [
+            {
+              "category": "back",
+              "observation": "후면 매트 글래스 상태 양호, 파손 및 변색 없음 관찰",
+              "severity": "NONE",
+              "confidence": 0.95,
+              "status": "AI_OBSERVED",
+              "requiresAdditionalCheck": true,
+              "isFallback": false,
+              "analysisMethod": "GEMINI_VISION_API"
+            },
+            {
+              "category": "camera_lens",
+              "observation": "3개 렌즈 림 주변 미세 먼지 외 렌즈 긁힘 없음",
+              "severity": "NONE",
+              "confidence": 0.91,
+              "status": "AI_OBSERVED",
+              "requiresAdditionalCheck": true,
+              "checkRecommendation": "카메라 앱 멍 발생 여부 실물 확인 필요",
+              "isFallback": false,
+              "analysisMethod": "GEMINI_VISION_API"
+            }
+          ]
+        },
+        {
+          "id": "img-3",
+          "deviceId": "dev-1",
+          "url": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&auto=format&fit=crop&q=80",
+          "angle": "RIGHT",
+          "uploadedAt": "2026-09-14T10:24:00Z",
+          "analysisMethod": "GEMINI_VISION_API",
+          "isFallback": false,
+          "qualityAnalysis": {
+            "score": 84,
+            "isAcceptable": true,
+            "issues": [
+              "프레임 우측 하단 반사 일부 존재"
+            ],
+            "recommendedAction": "상단 모서리 부분 가까이 재촬영 권장",
+            "isFallback": false
+          },
+          "visualObservations": [
+            {
+              "category": "frame",
+              "observation": "티타늄 프레임 우측 상단 모서리에 0.5mm 수준의 미세 찍힘(덴트) 관찰됨",
+              "severity": "MINOR",
+              "confidence": 0.88,
+              "status": "AI_OBSERVED",
+              "requiresAdditionalCheck": true,
+              "checkRecommendation": "우측 상단 덴트 깊이 직접 확인 권장",
+              "isFallback": false,
+              "analysisMethod": "GEMINI_VISION_API"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "id": "display_glass",
+          "category": "DISPLAY",
+          "label": "전면 액정 파손 및 균열",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI 시각 관찰: 전면 유리 파손 없음 관찰 (실물 대면 터치/번인 확인 대기)",
+          "requiresCheck": true,
+          "checkReason": "사진만으로 내부 OLED 손상 및 터치 불량을 단정할 수 없으므로 대면 확인 필요"
+        },
+        {
+          "id": "display_scratch",
+          "category": "DISPLAY",
+          "label": "화면 미세 스크래치 및 잔상",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "판매자 미세 실기스 1곳 기재. 번인 여부는 OLED 특성상 실기기 흰 화면 확인 필요",
+          "requiresCheck": true,
+          "checkReason": "설정 화면 등 흰 배경에서 번인/잔상 여부 확인 권장"
+        },
+        {
+          "id": "frame_dents",
+          "category": "EXTERIOR",
+          "label": "측면 프레임 찍힘 및 도색 벗겨짐",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI가 우측 상단 프레임에 0.5mm 미세 콕 관찰",
+          "requiresCheck": true,
+          "checkReason": "사진 각도에 따른 빛 반사 가능성 있으므로 육안 확인 요망"
+        },
+        {
+          "id": "back_glass",
+          "category": "EXTERIOR",
+          "label": "후면 유리 및 패널 파손/기스",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI 시각 관찰: 후면 무광 글래스 파손 미발견 (실물 촉감 확인 권장)",
+          "requiresCheck": true
+        },
+        {
+          "id": "camera_lens",
+          "category": "CAMERA",
+          "label": "카메라 렌즈 균열 및 멍",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI 시각 관찰: 트리플 렌즈 표면 크랙 미발견",
+          "requiresCheck": true,
+          "checkReason": "카메라 구동 시 내부 센서 멍 유무 확인 필요"
+        },
+        {
+          "id": "battery_health",
+          "category": "BATTERY",
+          "label": "배터리 실제 성능 상태",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "판매자 입력 91%. 사진만으로 배터리 성능 확인 불가 (설정 스크린샷 확인 필요)",
+          "requiresCheck": true,
+          "checkReason": "설정 > 배터리 > 배터리 성능 상태 증빙 필요"
+        },
+        {
+          "id": "biometrics_face_touch",
+          "category": "BIOMETRICS",
+          "label": "생체인식 (Face ID / 지문인식)",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "판매자 Face ID 정상 보고. 사진으로 확인 불가",
+          "requiresCheck": true,
+          "checkReason": "직거래 또는 수령 후 Face ID 등록 테스트 필요"
+        },
+        {
+          "id": "repair_history",
+          "category": "REPAIR",
+          "label": "부품 교체 및 사설 수리 이력",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "판매자 무수리 보고. 사진만으로 사설 부품 교체 여부 단정 불가",
+          "requiresCheck": true,
+          "checkReason": "설정 > 일반 > 정보 > 부품 및 서비스 내역에 알 수 없는 부품 표시 없는지 확인 필요"
+        }
+      ]
+    },
+    {
+      "id": "dev-2",
+      "userId": "user-dealer-1",
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "canonicalId": "samsung-galaxy-s24-ultra",
+      "storage": "512GB",
+      "color": "티타늄 그레이",
+      "releaseYear": 2024,
+      "telecom": "자급제",
+      "batteryHealthUserReported": 98,
+      "conditionGradeEstimated": "S",
+      "status": "REPORT_READY",
+      "createdAt": "2026-09-15T09:00:00Z",
+      "updatedAt": "2026-09-15T11:00:00Z",
+      "askingPrice": 1200000,
+      "buyPrice": 1050000,
+      "referencePrice": 1220000,
+      "infoSufficiencyScore": 92,
+      "shareToken": "share-sample-s24u",
+      "shareExpiresAt": "2026-10-15T00:00:00Z",
+      "shareIsRevoked": false,
+      "shareAccessCount": 1,
+      "images": [
+        {
+          "id": "img-4",
+          "deviceId": "dev-2",
+          "url": "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&auto=format&fit=crop&q=80",
+          "angle": "FRONT",
+          "uploadedAt": "2026-09-15T09:10:00Z",
+          "analysisMethod": "GEMINI_VISION_API",
+          "isFallback": false,
+          "qualityAnalysis": {
+            "score": 96,
+            "isAcceptable": true,
+            "issues": [],
+            "isFallback": false
+          },
+          "visualObservations": [
+            {
+              "category": "screen",
+              "observation": "전면 플랫 디스플레이 흠집 없음 관찰, 반사 방지 코팅 유지",
+              "severity": "NONE",
+              "confidence": 0.96,
+              "status": "AI_OBSERVED",
+              "requiresAdditionalCheck": true,
+              "checkRecommendation": "터치 및 S펜 입력 감도 실물 확인 권장",
+              "isFallback": false,
+              "analysisMethod": "GEMINI_VISION_API"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "id": "display_glass",
+          "category": "DISPLAY",
+          "label": "전면 액정 파손 및 균열",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI 시각 관찰: 파손 없음",
+          "requiresCheck": true
+        },
+        {
+          "id": "frame_dents",
+          "category": "EXTERIOR",
+          "label": "측면 프레임 찍힘 및 도색 벗겨짐",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "AI_OBSERVED",
+          "detail": "AI 시각 관찰: 티타늄 프레임 무흠집",
+          "requiresCheck": true
+        },
+        {
+          "id": "battery_health",
+          "category": "BATTERY",
+          "label": "배터리 실제 성능 상태",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "삼성 멤버스 배터리 진단 정상 (사진 확인 불가)",
+          "requiresCheck": true
+        }
+      ]
+    },
+    {
+      "id": "dev-3",
+      "userId": "user-dealer-1",
+      "brand": "Apple",
+      "model": "iPhone 14 Pro",
+      "canonicalId": "apple-iphone-14-pro",
+      "storage": "128GB",
+      "color": "딥 퍼플",
+      "releaseYear": 2022,
+      "telecom": "KT",
+      "batteryHealthUserReported": 87,
+      "conditionGradeEstimated": "A",
+      "status": "REPORT_READY",
+      "createdAt": "2026-09-13T11:00:00Z",
+      "updatedAt": "2026-09-14T09:30:00Z",
+      "askingPrice": 890000,
+      "buyPrice": 760000,
+      "referencePrice": 910000,
+      "infoSufficiencyScore": 82,
+      "shareToken": "share-sample-ip14p",
+      "shareExpiresAt": "2026-10-10T00:00:00Z",
+      "shareIsRevoked": false,
+      "shareAccessCount": 5,
+      "images": [],
+      "conditions": [
+        {
+          "id": "display_glass",
+          "category": "DISPLAY",
+          "label": "전면 액정 파손 및 균열",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "판매자 정상 보고",
+          "requiresCheck": true
+        }
+      ]
+    },
+    {
+      "id": "dev-4",
+      "userId": "user-exporter-1",
+      "brand": "Samsung",
+      "model": "Galaxy S23",
+      "canonicalId": "samsung-galaxy-s23",
+      "storage": "256GB",
+      "color": "팬텀 블랙",
+      "releaseYear": 2023,
+      "telecom": "자급제",
+      "batteryHealthUserReported": 90,
+      "conditionGradeEstimated": "B",
+      "status": "ANALYZED",
+      "createdAt": "2026-09-12T15:00:00Z",
+      "updatedAt": "2026-09-13T18:00:00Z",
+      "askingPrice": 580000,
+      "buyPrice": 480000,
+      "referencePrice": 590000,
+      "infoSufficiencyScore": 78,
+      "shareToken": "share-sample-s23",
+      "shareExpiresAt": "2026-10-05T00:00:00Z",
+      "shareIsRevoked": false,
+      "shareAccessCount": 2,
+      "images": [],
+      "conditions": [
+        {
+          "id": "display_glass",
+          "category": "DISPLAY",
+          "label": "전면 액정 파손 및 균열",
+          "status": "NEEDS_CHECK",
+          "evidenceSource": "USER_REPORTED",
+          "detail": "수출 검수 대기 중",
+          "requiresCheck": true
+        }
+      ]
+    }
+  ],
+  "priceRecords": [
+    {
+      "id": "pr-1",
+      "source": "당근마켓",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "A",
+      "batteryCondition": "배터리 91%",
+      "price": 1120000,
+      "currency": "KRW",
+      "region": "서울 강남구",
+      "listingOrTransaction": "TRANSACTION",
+      "collectedAt": "2026-09-10",
+      "dataConfidence": "HIGH",
+      "notes": "정상 해지, 박스 풀구성, 액정 강화유리 부착 사용",
+      "isStale": false
+    },
+    {
+      "id": "pr-2",
+      "source": "번개장터 번개케어",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "A",
+      "batteryCondition": "배터리 89%",
+      "price": 1150000,
+      "currency": "KRW",
+      "region": "전국 택배",
+      "listingOrTransaction": "TRANSACTION",
+      "collectedAt": "2026-09-12",
+      "dataConfidence": "HIGH",
+      "notes": "전문 검수 통과 완료 기기",
+      "isStale": false
+    },
+    {
+      "id": "pr-3",
+      "source": "중고나라",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "B",
+      "batteryCondition": "배터리 86%",
+      "price": 1060000,
+      "currency": "KRW",
+      "region": "경기 성남시",
+      "listingOrTransaction": "LISTING",
+      "collectedAt": "2026-09-14",
+      "dataConfidence": "MEDIUM",
+      "notes": "모서리 1곳 미세 콕, 액정 기스 없음",
+      "isStale": false
+    },
+    {
+      "id": "pr-4",
+      "source": "제휴 중고폰 매입업체 (용산 파트너스)",
+      "sourceType": "PARTNER",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "A",
+      "price": 980000,
+      "currency": "KRW",
+      "region": "서울 용산구",
+      "listingOrTransaction": "BUY_OFFER",
+      "collectedAt": "2026-09-15",
+      "dataConfidence": "HIGH",
+      "notes": "딜러 매입 단가 기준 (외관 A급 무흠집)",
+      "isStale": false
+    },
+    {
+      "id": "pr-5",
+      "source": "당근마켓",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "S",
+      "batteryCondition": "배터리 96%",
+      "price": 1210000,
+      "currency": "KRW",
+      "region": "서울 송파구",
+      "listingOrTransaction": "LISTING",
+      "collectedAt": "2026-09-15",
+      "dataConfidence": "HIGH",
+      "notes": "애플케어플러스 잔여 4개월",
+      "isStale": false
+    },
+    {
+      "id": "pr-6",
+      "source": "전문 리퍼몰 (리폰)",
+      "sourceType": "RETAILER",
+      "productId": "apple-iphone-15-pro",
+      "model": "iPhone 15 Pro",
+      "storage": "256GB",
+      "conditionGrade": "A",
+      "batteryCondition": "배터리 90% 이상 보증",
+      "price": 1190000,
+      "currency": "KRW",
+      "region": "온라인",
+      "listingOrTransaction": "SELL_OFFER",
+      "collectedAt": "2026-09-11",
+      "dataConfidence": "HIGH",
+      "notes": "30일 무상 AS 보증 포함 소매가",
+      "isStale": false
+    },
+    {
+      "id": "pr-7",
+      "source": "당근마켓",
+      "sourceType": "MARKETPLACE",
+      "productId": "samsung-galaxy-s24-ultra",
+      "model": "Galaxy S24 Ultra",
+      "storage": "512GB",
+      "conditionGrade": "A",
+      "price": 1180000,
+      "currency": "KRW",
+      "region": "부산 해운대구",
+      "listingOrTransaction": "TRANSACTION",
+      "collectedAt": "2026-09-08",
+      "dataConfidence": "HIGH",
+      "notes": "자급제, 삼케플 양도 가능, 케이스 착용 사용"
+    },
+    {
+      "id": "pr-8",
+      "source": "번개장터",
+      "sourceType": "MARKETPLACE",
+      "productId": "samsung-galaxy-s24-ultra",
+      "model": "Galaxy S24 Ultra",
+      "storage": "512GB",
+      "conditionGrade": "A",
+      "price": 1220000,
+      "currency": "KRW",
+      "region": "전국",
+      "listingOrTransaction": "LISTING",
+      "collectedAt": "2026-09-14",
+      "dataConfidence": "HIGH",
+      "notes": "티타늄 블랙, 미세 실기스 1곳"
+    },
+    {
+      "id": "pr-9",
+      "source": "도매 유통 단가표 (성동 테크)",
+      "sourceType": "WHOLESALER",
+      "productId": "samsung-galaxy-s24-ultra",
+      "model": "Galaxy S24 Ultra",
+      "storage": "512GB",
+      "conditionGrade": "A",
+      "price": 1040000,
+      "currency": "KRW",
+      "region": "서울 성동구",
+      "listingOrTransaction": "BUY_OFFER",
+      "collectedAt": "2026-09-13",
+      "dataConfidence": "HIGH",
+      "notes": "수출/내수 B2B 도매 단가"
+    },
+    {
+      "id": "pr-10",
+      "source": "당근마켓",
+      "sourceType": "MARKETPLACE",
+      "productId": "samsung-galaxy-z-flip-5",
+      "model": "Galaxy Z Flip 5",
+      "storage": "256GB",
+      "conditionGrade": "A",
+      "price": 520000,
+      "currency": "KRW",
+      "region": "대구 수성구",
+      "listingOrTransaction": "TRANSACTION",
+      "collectedAt": "2026-09-09",
+      "dataConfidence": "HIGH",
+      "notes": "힌지 깨끗함, 내부 필름 정품 교체 완료"
+    },
+    {
+      "id": "pr-11",
+      "source": "중고나라",
+      "sourceType": "MARKETPLACE",
+      "productId": "samsung-galaxy-z-flip-5",
+      "model": "Galaxy Z Flip 5",
+      "storage": "256GB",
+      "conditionGrade": "B",
+      "price": 470000,
+      "currency": "KRW",
+      "region": "인천 연수구",
+      "listingOrTransaction": "LISTING",
+      "collectedAt": "2026-09-15",
+      "dataConfidence": "MEDIUM",
+      "notes": "힌지 찍힘 2곳 있으나 화면 깨끗"
+    },
+    {
+      "id": "pr-12",
+      "source": "당근마켓",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-14",
+      "model": "iPhone 14",
+      "storage": "128GB",
+      "conditionGrade": "A",
+      "batteryCondition": "배터리 87%",
+      "price": 640000,
+      "currency": "KRW",
+      "region": "서울 마포구",
+      "listingOrTransaction": "TRANSACTION",
+      "collectedAt": "2026-09-11",
+      "dataConfidence": "HIGH"
+    },
+    {
+      "id": "pr-13",
+      "source": "번개장터",
+      "sourceType": "MARKETPLACE",
+      "productId": "apple-iphone-14",
+      "model": "iPhone 14",
+      "storage": "128GB",
+      "conditionGrade": "A",
+      "batteryCondition": "배터리 85%",
+      "price": 660000,
+      "currency": "KRW",
+      "region": "전국",
+      "listingOrTransaction": "LISTING",
+      "collectedAt": "2026-09-15",
+      "dataConfidence": "MEDIUM"
+    }
+  ],
+  "reports": [],
+  "auditLogs": [
+    {
+      "id": "log-1789573865979-0oc5",
+      "action": "DELETE_DEVICE",
+      "deviceId": "dev-1789573865972",
+      "timestamp": "2026-09-16T15:51:05.979Z"
+    },
+    {
+      "id": "log-1789573865972-pkek",
+      "action": "CREATE_DEVICE",
+      "deviceId": "dev-1789573865972",
+      "meta": {
+        "model": "iPhone 15 Pro",
+        "userId": "user-seller-1"
+      },
+      "timestamp": "2026-09-16T15:51:05.972Z"
+    },
+    {
+      "id": "log-1789573865961-r2mj",
+      "action": "UPDATE_DEVICE",
+      "deviceId": "dev-1",
+      "timestamp": "2026-09-16T15:51:05.961Z"
+    },
+    {
+      "id": "log-1789573865954-4c2o",
+      "action": "REVOKE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "timestamp": "2026-09-16T15:51:05.954Z"
+    },
+    {
+      "id": "log-1789573865943-o45b",
+      "action": "GENERATE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "meta": {
+        "token": "share-mu4a2od3-v2s1f",
+        "expiresAt": "2026-09-23T15:51:05.943Z"
+      },
+      "timestamp": "2026-09-16T15:51:05.943Z"
+    },
+    {
+      "id": "log-1789573851137-n72u",
+      "action": "DELETE_DEVICE",
+      "deviceId": "dev-1789573851131",
+      "timestamp": "2026-09-16T15:50:51.137Z"
+    },
+    {
+      "id": "log-1789573851131-3yxa",
+      "action": "CREATE_DEVICE",
+      "deviceId": "dev-1789573851131",
+      "meta": {
+        "model": "iPhone 15 Pro",
+        "userId": "user-seller-1"
+      },
+      "timestamp": "2026-09-16T15:50:51.131Z"
+    },
+    {
+      "id": "log-1789573851118-31d2",
+      "action": "REVOKE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "timestamp": "2026-09-16T15:50:51.118Z"
+    },
+    {
+      "id": "log-1789573851092-21vm",
+      "action": "GENERATE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "meta": {
+        "token": "share-mu4a2cwk-30kre",
+        "expiresAt": "2026-09-23T15:50:51.092Z"
+      },
+      "timestamp": "2026-09-16T15:50:51.092Z"
+    }
+  ],
+  "shareAccessLogs": [
+    {
+      "id": "sal-1789573865949-hia0",
+      "deviceId": "dev-1",
+      "shareToken": "share-mu4a2od3-v2s1f",
+      "accessedAt": "2026-09-16T15:51:05.949Z",
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "id": "sal-1789573851096-zgpx",
+      "deviceId": "dev-1",
+      "shareToken": "share-mu4a2cwk-30kre",
+      "accessedAt": "2026-09-16T15:50:51.096Z",
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    }
+  ],
+  "savedAt": "2026-09-16T15:51:05.979Z"
+}

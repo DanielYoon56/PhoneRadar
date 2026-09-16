@@ -1,0 +1,6 @@
+{
+  "name": "PhoneCheck AI",
+  "description": "AI 기반 중고폰 상태·가격 검증 및 거래 판단 플랫폼",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -3,7 +3,7 @@
  * AI 기반 중고폰 상태·가격 검증 플랫폼
  */
 
-export type UserRole = 'SELLER' | 'DEALER' | 'EXPORTER' | 'BUYER';
+export type UserRole = 'SELLER' | 'DEALER' | 'EXPORTER' | 'BUYER' | 'ADMIN';
 
 export interface UserProfile {
   id: string;
@@ -39,6 +39,8 @@ export interface DeviceImage {
   uploadedAt: string;
   qualityAnalysis?: PhotoQualityResult;
   visualObservations?: VisualObservation[];
+  analysisMethod?: 'GEMINI_VISION_API' | 'RULE_BASED_FALLBACK';
+  isFallback?: boolean;
 }
 
 export interface PhotoQualityResult {
@@ -46,6 +48,7 @@ export interface PhotoQualityResult {
   isAcceptable: boolean;
   issues: string[]; // e.g. "조명 어두움", "초점 흐림", "반사 심함", "화면 상단 가려짐"
   recommendedAction?: string; // e.g. "프레임 우측 상단을 가까이 촬영해 주세요."
+  isFallback?: boolean;
 }
 
 export interface VisualObservation {
@@ -56,6 +59,8 @@ export interface VisualObservation {
   status: 'AI_OBSERVED';
   requiresAdditionalCheck: boolean;
   checkRecommendation?: string;
+  isFallback?: boolean;
+  analysisMethod?: 'GEMINI_VISION_API' | 'RULE_BASED_FALLBACK';
 }
 
 export type PriceSourceType =
@@ -86,9 +91,20 @@ export interface PriceRecord {
   region?: string;
   listingOrTransaction: ListingOrTransaction;
   collectedAt: string;
+  expiresAt?: string;
+  isStale?: boolean;
   sourceUrl?: string;
   dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
   notes?: string;
+}
+
+export interface PriceCategorySummary {
+  min: number;
+  max: number;
+  median: number;
+  average: number;
+  count: number;
+  description: string;
 }
 
 export interface PriceAnalysisResult {
@@ -107,12 +123,25 @@ export interface PriceAnalysisResult {
   hasTransactionPrices: boolean;
   aiPriceJudgement: string; // strict non-hype wording
   notes: string[];
+  // Strictly separated price metrics (Section 57 / Gate v1.0)
+  transactionSummary: PriceCategorySummary | null; // 실거래 체결가
+  listingSummary: PriceCategorySummary | null;     // 판매 등록 호가
+  buyOfferSummary: PriceCategorySummary | null;    // 도매/딜러 매입가
   marginEstimate?: {
     buyPrice: number;
     expectedSellPrice: number;
     grossMargin: number;
     marginPercent: number;
   };
+}
+
+export interface ShareAccessLog {
+  id: string;
+  deviceId: string;
+  shareToken: string;
+  accessedAt: string;
+  ip?: string;
+  userAgent?: string;
 }
 
 export interface Device {
@@ -139,6 +168,9 @@ export interface Device {
   conditions: ConditionItem[];
   infoSufficiencyScore: number; // 0-100 (상태 정보 충족도)
   shareToken?: string;
+  shareExpiresAt?: string;
+  shareIsRevoked?: boolean;
+  shareAccessCount?: number;
 }
 
 export interface TransactionReport {

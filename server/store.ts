@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import {
   Device,
   PriceRecord,
@@ -6,6 +8,7 @@ import {
   AdminStats,
   ConditionItem,
   DeviceImage,
+  ShareAccessLog,
 } from '../src/types/index.js';
 import { DEFAULT_CONDITION_ITEMS } from '../src/config/appConfig.js';
 
@@ -233,7 +236,7 @@ const INITIAL_PRICE_RECORDS: PriceRecord[] = [
   },
 ];
 
-// Seed initial sample devices
+// Seed initial sample devices with strictly separated owners and proper condition statuses (No auto-VERIFIED for AI observations)
 const INITIAL_DEVICES: Device[] = [
   {
     id: 'dev-1',
@@ -257,6 +260,9 @@ const INITIAL_DEVICES: Device[] = [
     referencePrice: 1150000,
     infoSufficiencyScore: 88,
     shareToken: 'share-sample-ip15p',
+    shareExpiresAt: '2026-10-15T00:00:00Z',
+    shareIsRevoked: false,
+    shareAccessCount: 3,
     images: [
       {
         id: 'img-1',
@@ -264,10 +270,13 @@ const INITIAL_DEVICES: Device[] = [
         url: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80',
         angle: 'FRONT',
         uploadedAt: '2026-09-14T10:22:00Z',
+        analysisMethod: 'GEMINI_VISION_API',
+        isFallback: false,
         qualityAnalysis: {
           score: 95,
           isAcceptable: true,
           issues: [],
+          isFallback: false,
         },
         visualObservations: [
           {
@@ -276,7 +285,10 @@ const INITIAL_DEVICES: Device[] = [
             severity: 'MINOR',
             confidence: 0.92,
             status: 'AI_OBSERVED',
-            requiresAdditionalCheck: false,
+            requiresAdditionalCheck: true,
+            checkRecommendation: '흰색 화면에서 번인 잔상 및 터치 감도 실물 확인 필요',
+            isFallback: false,
+            analysisMethod: 'GEMINI_VISION_API',
           },
         ],
       },
@@ -286,19 +298,24 @@ const INITIAL_DEVICES: Device[] = [
         url: 'https://images.unsplash.com/photo-1695048065059-8ff7c503460d?w=800&auto=format&fit=crop&q=80',
         angle: 'BACK',
         uploadedAt: '2026-09-14T10:23:00Z',
+        analysisMethod: 'GEMINI_VISION_API',
+        isFallback: false,
         qualityAnalysis: {
           score: 92,
           isAcceptable: true,
           issues: [],
+          isFallback: false,
         },
         visualObservations: [
           {
             category: 'back',
-            observation: '후면 매트 글래스 상태 양호, 파손 및 변색 없음',
+            observation: '후면 매트 글래스 상태 양호, 파손 및 변색 없음 관찰',
             severity: 'NONE',
             confidence: 0.95,
             status: 'AI_OBSERVED',
-            requiresAdditionalCheck: false,
+            requiresAdditionalCheck: true,
+            isFallback: false,
+            analysisMethod: 'GEMINI_VISION_API',
           },
           {
             category: 'camera_lens',
@@ -306,7 +323,10 @@ const INITIAL_DEVICES: Device[] = [
             severity: 'NONE',
             confidence: 0.91,
             status: 'AI_OBSERVED',
-            requiresAdditionalCheck: false,
+            requiresAdditionalCheck: true,
+            checkRecommendation: '카메라 앱 멍 발생 여부 실물 확인 필요',
+            isFallback: false,
+            analysisMethod: 'GEMINI_VISION_API',
           },
         ],
       },
@@ -316,11 +336,14 @@ const INITIAL_DEVICES: Device[] = [
         url: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&auto=format&fit=crop&q=80',
         angle: 'RIGHT',
         uploadedAt: '2026-09-14T10:24:00Z',
+        analysisMethod: 'GEMINI_VISION_API',
+        isFallback: false,
         qualityAnalysis: {
           score: 84,
           isAcceptable: true,
           issues: ['프레임 우측 하단 반사 일부 존재'],
           recommendedAction: '상단 모서리 부분 가까이 재촬영 권장',
+          isFallback: false,
         },
         visualObservations: [
           {
@@ -331,20 +354,23 @@ const INITIAL_DEVICES: Device[] = [
             status: 'AI_OBSERVED',
             requiresAdditionalCheck: true,
             checkRecommendation: '우측 상단 덴트 깊이 직접 확인 권장',
+            isFallback: false,
+            analysisMethod: 'GEMINI_VISION_API',
           },
         ],
       },
     ],
+    // Constitutional Rule: AI observations are NEVER automatically VERIFIED!
     conditions: [
       {
         id: 'display_glass',
         category: 'DISPLAY',
         label: '전면 액정 파손 및 균열',
-        status: 'VERIFIED',
+        status: 'NEEDS_CHECK',
         evidenceSource: 'AI_OBSERVED',
-        detail: 'AI 사진 분석 결과 전면 유리 파손 없음 확인',
-        requiresCheck: false,
-        verifiedAt: '2026-09-14T10:25:00Z',
+        detail: 'AI 시각 관찰: 전면 유리 파손 없음 관찰 (실물 대면 터치/번인 확인 대기)',
+        requiresCheck: true,
+        checkReason: '사진만으로 내부 OLED 손상 및 터치 불량을 단정할 수 없으므로 대면 확인 필요',
       },
       {
         id: 'display_scratch',
@@ -370,21 +396,20 @@ const INITIAL_DEVICES: Device[] = [
         id: 'back_glass',
         category: 'EXTERIOR',
         label: '후면 유리 및 패널 파손/기스',
-        status: 'VERIFIED',
+        status: 'NEEDS_CHECK',
         evidenceSource: 'AI_OBSERVED',
-        detail: '후면 무광 글래스 깨끗함',
-        requiresCheck: false,
-        verifiedAt: '2026-09-14T10:25:00Z',
+        detail: 'AI 시각 관찰: 후면 무광 글래스 파손 미발견 (실물 촉감 확인 권장)',
+        requiresCheck: true,
       },
       {
         id: 'camera_lens',
         category: 'CAMERA',
         label: '카메라 렌즈 균열 및 멍',
-        status: 'VERIFIED',
+        status: 'NEEDS_CHECK',
         evidenceSource: 'AI_OBSERVED',
-        detail: '트리플 렌즈 표면 크랙 없음',
-        requiresCheck: false,
-        verifiedAt: '2026-09-14T10:25:00Z',
+        detail: 'AI 시각 관찰: 트리플 렌즈 표면 크랙 미발견',
+        requiresCheck: true,
+        checkReason: '카메라 구동 시 내부 센서 멍 유무 확인 필요',
       },
       {
         id: 'battery_health',
@@ -418,9 +443,10 @@ const INITIAL_DEVICES: Device[] = [
       },
     ],
   },
+  // Device owned by Dealer
   {
     id: 'dev-2',
-    userId: 'user-seller-1',
+    userId: 'user-dealer-1',
     brand: 'Samsung',
     model: 'Galaxy S24 Ultra',
     canonicalId: 'samsung-galaxy-s24-ultra',
@@ -438,6 +464,9 @@ const INITIAL_DEVICES: Device[] = [
     referencePrice: 1220000,
     infoSufficiencyScore: 92,
     shareToken: 'share-sample-s24u',
+    shareExpiresAt: '2026-10-15T00:00:00Z',
+    shareIsRevoked: false,
+    shareAccessCount: 1,
     images: [
       {
         id: 'img-4',
@@ -445,15 +474,20 @@ const INITIAL_DEVICES: Device[] = [
         url: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&auto=format&fit=crop&q=80',
         angle: 'FRONT',
         uploadedAt: '2026-09-15T09:10:00Z',
-        qualityAnalysis: { score: 96, isAcceptable: true, issues: [] },
+        analysisMethod: 'GEMINI_VISION_API',
+        isFallback: false,
+        qualityAnalysis: { score: 96, isAcceptable: true, issues: [], isFallback: false },
         visualObservations: [
           {
             category: 'screen',
-            observation: '전면 플랫 디스플레이 흠집 없음, 반사 방지 코팅 유지',
+            observation: '전면 플랫 디스플레이 흠집 없음 관찰, 반사 방지 코팅 유지',
             severity: 'NONE',
             confidence: 0.96,
             status: 'AI_OBSERVED',
-            requiresAdditionalCheck: false,
+            requiresAdditionalCheck: true,
+            checkRecommendation: '터치 및 S펜 입력 감도 실물 확인 권장',
+            isFallback: false,
+            analysisMethod: 'GEMINI_VISION_API',
           },
         ],
       },
@@ -463,19 +497,19 @@ const INITIAL_DEVICES: Device[] = [
         id: 'display_glass',
         category: 'DISPLAY',
         label: '전면 액정 파손 및 균열',
-        status: 'VERIFIED',
+        status: 'NEEDS_CHECK',
         evidenceSource: 'AI_OBSERVED',
-        detail: '파손 없음',
-        requiresCheck: false,
+        detail: 'AI 시각 관찰: 파손 없음',
+        requiresCheck: true,
       },
       {
         id: 'frame_dents',
         category: 'EXTERIOR',
         label: '측면 프레임 찍힘 및 도색 벗겨짐',
-        status: 'VERIFIED',
+        status: 'NEEDS_CHECK',
         evidenceSource: 'AI_OBSERVED',
-        detail: '티타늄 프레임 무흠집',
-        requiresCheck: false,
+        detail: 'AI 시각 관찰: 티타늄 프레임 무흠집',
+        requiresCheck: true,
       },
       {
         id: 'battery_health',
@@ -488,6 +522,80 @@ const INITIAL_DEVICES: Device[] = [
       },
     ],
   },
+  // Additional Dealer Inventory Device
+  {
+    id: 'dev-3',
+    userId: 'user-dealer-1',
+    brand: 'Apple',
+    model: 'iPhone 14 Pro',
+    canonicalId: 'apple-iphone-14-pro',
+    storage: '128GB',
+    color: '딥 퍼플',
+    releaseYear: 2022,
+    telecom: 'KT',
+    batteryHealthUserReported: 87,
+    conditionGradeEstimated: 'A',
+    status: 'REPORT_READY',
+    createdAt: '2026-09-13T11:00:00Z',
+    updatedAt: '2026-09-14T09:30:00Z',
+    askingPrice: 890000,
+    buyPrice: 760000,
+    referencePrice: 910000,
+    infoSufficiencyScore: 82,
+    shareToken: 'share-sample-ip14p',
+    shareExpiresAt: '2026-10-10T00:00:00Z',
+    shareIsRevoked: false,
+    shareAccessCount: 5,
+    images: [],
+    conditions: [
+      {
+        id: 'display_glass',
+        category: 'DISPLAY',
+        label: '전면 액정 파손 및 균열',
+        status: 'NEEDS_CHECK',
+        evidenceSource: 'USER_REPORTED',
+        detail: '판매자 정상 보고',
+        requiresCheck: true,
+      },
+    ],
+  },
+  // Exporter Batch Device
+  {
+    id: 'dev-4',
+    userId: 'user-exporter-1',
+    brand: 'Samsung',
+    model: 'Galaxy S23',
+    canonicalId: 'samsung-galaxy-s23',
+    storage: '256GB',
+    color: '팬텀 블랙',
+    releaseYear: 2023,
+    telecom: '자급제',
+    batteryHealthUserReported: 90,
+    conditionGradeEstimated: 'B',
+    status: 'ANALYZED',
+    createdAt: '2026-09-12T15:00:00Z',
+    updatedAt: '2026-09-13T18:00:00Z',
+    askingPrice: 580000,
+    buyPrice: 480000,
+    referencePrice: 590000,
+    infoSufficiencyScore: 78,
+    shareToken: 'share-sample-s23',
+    shareExpiresAt: '2026-10-05T00:00:00Z',
+    shareIsRevoked: false,
+    shareAccessCount: 2,
+    images: [],
+    conditions: [
+      {
+        id: 'display_glass',
+        category: 'DISPLAY',
+        label: '전면 액정 파손 및 균열',
+        status: 'NEEDS_CHECK',
+        evidenceSource: 'USER_REPORTED',
+        detail: '수출 검수 대기 중',
+        requiresCheck: true,
+      },
+    ],
+  },
 ];
 
 class MemoryStore {
@@ -495,6 +603,7 @@ class MemoryStore {
   private devices: Map<string, Device> = new Map();
   private priceRecords: PriceRecord[] = [];
   private reports: Map<string, TransactionReport> = new Map();
+  private shareAccessLogs: ShareAccessLog[] = [];
   private auditLogs: Array<{
     id: string;
     action: string;
@@ -504,6 +613,15 @@ class MemoryStore {
   }> = [];
 
   constructor() {
+    this.initDefaultData();
+    // Attempt to load from persistent disk file
+    const loaded = this.loadFromDisk();
+    if (!loaded) {
+      this.saveToDisk();
+    }
+  }
+
+  private initDefaultData() {
     // Default user profiles for testing roles
     this.users.set('user-seller-1', {
       id: 'user-seller-1',
@@ -532,6 +650,15 @@ class MemoryStore {
       monthlyAnalysisCount: 215,
       monthlyQuota: 9999,
     });
+    this.users.set('user-admin-1', {
+      id: 'user-admin-1',
+      name: '시스템 최고 관리자',
+      email: 'admin@phonecheck.ai',
+      role: 'ADMIN',
+      subscriptionTier: 'ENTERPRISE',
+      monthlyAnalysisCount: 999,
+      monthlyQuota: 99999,
+    });
 
     // Seed devices
     for (const dev of INITIAL_DEVICES) {
@@ -542,8 +669,74 @@ class MemoryStore {
     this.priceRecords = [...INITIAL_PRICE_RECORDS];
   }
 
+  /**
+   * Persists the current database state to disk for durability (Requirement 10)
+   */
+  public saveToDisk(): void {
+    try {
+      const dataDir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const dbPath = path.join(dataDir, 'database.json');
+      const payload = {
+        users: Array.from(this.users.values()),
+        devices: Array.from(this.devices.values()),
+        priceRecords: this.priceRecords,
+        reports: Array.from(this.reports.values()),
+        auditLogs: this.auditLogs,
+        shareAccessLogs: this.shareAccessLogs,
+        savedAt: new Date().toISOString(),
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(payload, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to persist database to disk:', err);
+    }
+  }
+
+  /**
+   * Loads state from disk on startup
+   */
+  private loadFromDisk(): boolean {
+    try {
+      const dbPath = path.join(process.cwd(), 'data', 'database.json');
+      if (!fs.existsSync(dbPath)) return false;
+      const raw = fs.readFileSync(dbPath, 'utf-8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.users) && data.users.length > 0) {
+        this.users.clear();
+        for (const u of data.users) this.users.set(u.id, u);
+      }
+      if (Array.isArray(data.devices) && data.devices.length > 0) {
+        this.devices.clear();
+        for (const d of data.devices) this.devices.set(d.id, d);
+      }
+      if (Array.isArray(data.priceRecords) && data.priceRecords.length > 0) {
+        this.priceRecords = data.priceRecords;
+      }
+      if (Array.isArray(data.reports)) {
+        this.reports.clear();
+        for (const r of data.reports) this.reports.set(r.deviceId, r);
+      }
+      if (Array.isArray(data.auditLogs)) {
+        this.auditLogs = data.auditLogs;
+      }
+      if (Array.isArray(data.shareAccessLogs)) {
+        this.shareAccessLogs = data.shareAccessLogs;
+      }
+      return true;
+    } catch (err) {
+      console.error('Failed to load database from disk:', err);
+      return false;
+    }
+  }
+
   getUser(userId: string): UserProfile | undefined {
     return this.users.get(userId) || this.users.get('user-seller-1');
+  }
+
+  getAllUsers(): UserProfile[] {
+    return Array.from(this.users.values());
   }
 
   updateUserRole(userId: string, role: UserProfile['role']): UserProfile {
@@ -551,9 +744,10 @@ class MemoryStore {
     if (user) {
       user.role = role;
       this.users.set(user.id, user);
+      this.saveToDisk();
       return user;
     }
-    return {
+    const newUser: UserProfile = {
       id: userId,
       name: '사용자',
       email: 'user@example.com',
@@ -562,17 +756,24 @@ class MemoryStore {
       monthlyAnalysisCount: 1,
       monthlyQuota: 30,
     };
+    this.users.set(userId, newUser);
+    this.saveToDisk();
+    return newUser;
   }
 
-  // Devices
-  getDevices(userId?: string): Device[] {
+  /**
+   * Returns devices with strict multi-user tenant data isolation (Requirement 10)
+   * Admin role can view all devices; standard users can ONLY view their own devices.
+   */
+  getDevices(userId?: string, role?: string): Device[] {
     const list = Array.from(this.devices.values());
-    if (userId) {
-      // Return devices for this user, or if none, fallback to all for demo
-      const filtered = list.filter((d) => d.userId === userId);
-      return filtered.length > 0 ? filtered : list;
+    if (role === 'ADMIN') {
+      return list;
     }
-    return list;
+    if (userId) {
+      return list.filter((d) => d.userId === userId);
+    }
+    return [];
   }
 
   getDevice(id: string): Device | undefined {
@@ -585,6 +786,7 @@ class MemoryStore {
 
   createDevice(dev: Omit<Device, 'id' | 'createdAt' | 'updatedAt' | 'conditions' | 'images' | 'infoSufficiencyScore'>): Device {
     const id = `dev-${Date.now()}`;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const newDevice: Device = {
       ...dev,
       id,
@@ -595,9 +797,13 @@ class MemoryStore {
       conditions: JSON.parse(JSON.stringify(DEFAULT_CONDITION_ITEMS)),
       infoSufficiencyScore: 40, // Base default
       shareToken: `share-${Math.random().toString(36).substring(2, 10)}`,
+      shareExpiresAt: expiresAt,
+      shareIsRevoked: false,
+      shareAccessCount: 0,
     };
     this.devices.set(id, newDevice);
-    this.logAction('CREATE_DEVICE', id, { model: newDevice.model });
+    this.logAction('CREATE_DEVICE', id, { model: newDevice.model, userId: newDevice.userId });
+    this.saveToDisk();
     return newDevice;
   }
 
@@ -616,12 +822,16 @@ class MemoryStore {
 
     this.devices.set(id, updated);
     this.logAction('UPDATE_DEVICE', id);
+    this.saveToDisk();
     return updated;
   }
 
   deleteDevice(id: string): boolean {
     const deleted = this.devices.delete(id);
-    if (deleted) this.logAction('DELETE_DEVICE', id);
+    if (deleted) {
+      this.logAction('DELETE_DEVICE', id);
+      this.saveToDisk();
+    }
     return deleted;
   }
 
@@ -640,6 +850,7 @@ class MemoryStore {
     dev.infoSufficiencyScore = this.calculateSufficiencyScore(dev);
     dev.updatedAt = new Date().toISOString();
     this.devices.set(deviceId, dev);
+    this.saveToDisk();
     return newImg;
   }
 
@@ -652,6 +863,7 @@ class MemoryStore {
       dev.infoSufficiencyScore = this.calculateSufficiencyScore(dev);
       dev.updatedAt = new Date().toISOString();
       this.devices.set(deviceId, dev);
+      this.saveToDisk();
       return true;
     }
     return false;
@@ -681,7 +893,70 @@ class MemoryStore {
     dev.infoSufficiencyScore = this.calculateSufficiencyScore(dev);
     dev.updatedAt = new Date().toISOString();
     this.devices.set(deviceId, dev);
+    this.saveToDisk();
     return dev;
+  }
+
+  // Share Token Lifecycle Management (Requirement 8)
+  generateShareToken(deviceId: string, validityDays = 7): Device | undefined {
+    const dev = this.devices.get(deviceId);
+    if (!dev) return undefined;
+    const token = `share-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
+    const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+    dev.shareToken = token;
+    dev.shareExpiresAt = expiresAt;
+    dev.shareIsRevoked = false;
+    dev.updatedAt = new Date().toISOString();
+    this.devices.set(deviceId, dev);
+    this.logAction('GENERATE_SHARE_TOKEN', deviceId, { token, expiresAt });
+    this.saveToDisk();
+    return dev;
+  }
+
+  revokeShareToken(deviceId: string): Device | undefined {
+    const dev = this.devices.get(deviceId);
+    if (!dev) return undefined;
+    dev.shareIsRevoked = true;
+    dev.updatedAt = new Date().toISOString();
+    this.devices.set(deviceId, dev);
+    this.logAction('REVOKE_SHARE_TOKEN', deviceId);
+    this.saveToDisk();
+    return dev;
+  }
+
+  recordShareAccess(shareToken: string, meta: { ip?: string; userAgent?: string }): { valid: boolean; error?: string; status: number; device?: Device } {
+    const dev = Array.from(this.devices.values()).find((d) => d.shareToken === shareToken);
+    if (!dev) {
+      return { valid: false, status: 404, error: '존재하지 않거나 삭제된 공유 리포트 링크입니다.' };
+    }
+    if (dev.shareIsRevoked) {
+      return { valid: false, status: 410, error: '판매자에 의해 취소(비활성화)된 공유 리포트 링크입니다.' };
+    }
+    if (dev.shareExpiresAt && new Date(dev.shareExpiresAt).getTime() < Date.now()) {
+      return { valid: false, status: 410, error: '공유 링크 유효기간이 만료되었습니다. 판매자에게 새로운 공유 링크를 요청하세요.' };
+    }
+
+    // Record access log
+    const log: ShareAccessLog = {
+      id: `sal-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      deviceId: dev.id,
+      shareToken,
+      accessedAt: new Date().toISOString(),
+      ip: meta.ip || '127.0.0.1',
+      userAgent: meta.userAgent || 'Unknown',
+    };
+    this.shareAccessLogs.unshift(log);
+    if (this.shareAccessLogs.length > 500) this.shareAccessLogs.pop();
+
+    dev.shareAccessCount = (dev.shareAccessCount || 0) + 1;
+    this.devices.set(dev.id, dev);
+    this.saveToDisk();
+
+    return { valid: true, status: 200, device: dev };
+  }
+
+  getShareAccessLogs(deviceId: string): ShareAccessLog[] {
+    return this.shareAccessLogs.filter((l) => l.deviceId === deviceId);
   }
 
   // Price Records
@@ -702,20 +977,30 @@ class MemoryStore {
     return list;
   }
 
-  addPriceRecord(record: Omit<PriceRecord, 'id' | 'collectedAt'>): PriceRecord {
+  getAllPriceRecords(): PriceRecord[] {
+    return this.priceRecords;
+  }
+
+  addPriceRecord(record: Omit<PriceRecord, 'id' | 'collectedAt'> & { collectedAt?: string }): PriceRecord {
+    const collectedAt = record.collectedAt || new Date().toISOString().split('T')[0];
+    const expiresAt = record.expiresAt || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const newRecord: PriceRecord = {
       ...record,
       id: `pr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      collectedAt: new Date().toISOString().split('T')[0],
+      collectedAt,
+      expiresAt,
+      isStale: false,
     };
     this.priceRecords.unshift(newRecord);
     this.logAction('ADD_PRICE_RECORD', undefined, { model: record.model, price: record.price });
+    this.saveToDisk();
     return newRecord;
   }
 
   // Reports
   saveReport(report: TransactionReport): void {
     this.reports.set(report.deviceId, report);
+    this.saveToDisk();
   }
 
   getReport(deviceId: string): TransactionReport | undefined {
@@ -730,7 +1015,7 @@ class MemoryStore {
     ).length;
 
     return {
-      totalUsers: 142,
+      totalUsers: this.users.size + 140,
       activeUsers: 89,
       paidUsers: 34,
       totalDevices,

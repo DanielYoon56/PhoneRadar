@@ -25,6 +25,9 @@ export interface AiVisionAnalysisResult {
   unknownItems: string[];
   recommendedAngles: string[];
   summaryNote: string;
+  analysisMethod: 'GEMINI_VISION_API' | 'RULE_BASED_FALLBACK';
+  isFallback: boolean;
+  modelUsed: string;
 }
 
 /**
@@ -158,6 +161,7 @@ Return valid JSON adhering strictly to the response schema.`;
         isAcceptable: parsed.photoQuality?.isAcceptable ?? true,
         issues: parsed.photoQuality?.issues || [],
         recommendedAction: parsed.photoQuality?.recommendedAction,
+        isFallback: false,
       },
       observations: (parsed.observations || []).map((o: any) => ({
         category: o.category || 'general',
@@ -167,6 +171,8 @@ Return valid JSON adhering strictly to the response schema.`;
         status: 'AI_OBSERVED',
         requiresAdditionalCheck: !!o.requiresAdditionalCheck,
         checkRecommendation: o.checkRecommendation,
+        isFallback: false,
+        analysisMethod: 'GEMINI_VISION_API',
       })),
       needsCheckItems: parsed.needsCheckItems || [
         'OLED 백색 화면 잔상(번인) 확인',
@@ -178,6 +184,9 @@ Return valid JSON adhering strictly to the response schema.`;
       ],
       recommendedAngles: parsed.recommendedAngles || ['전면 화면', '후면 전체', '측면 모서리'],
       summaryNote: parsed.summaryNote || '사진 상 외관 관찰이 완료되었습니다.',
+      analysisMethod: 'GEMINI_VISION_API',
+      isFallback: false,
+      modelUsed: 'gemini-2.5-flash',
     };
   } catch (err) {
     console.error('Gemini vision analysis failed, falling back to rule-based analysis:', err);
@@ -186,7 +195,8 @@ Return valid JSON adhering strictly to the response schema.`;
 }
 
 /**
- * Deterministic fallback that strictly adheres to the platform constitution
+ * Deterministic fallback that strictly adheres to the platform constitution.
+ * Explicitly separated from actual Gemini vision observations so buyers and users are never misled.
  */
 function generateStructuredFallbackAnalysis(device: Device, angle: string): AiVisionAnalysisResult {
   const isFront = angle === 'FRONT' || angle === 'SCREEN_ON';
@@ -198,58 +208,69 @@ function generateStructuredFallbackAnalysis(device: Device, angle: string): AiVi
   if (isFront) {
     observations.push({
       category: 'screen',
-      observation: '전면 액정 글래스 파손 없음 관찰됨. 표면 미세 생활 실기스 유무는 빛 반사각에 따라 실물 확인 권장',
+      observation: '[규칙기반 대체추정] 전면 액정 글래스 파손 없음 추정 (실제 Vision 관찰 아님 - 실물 확인 필수)',
       severity: 'NONE',
-      confidence: 0.9,
+      confidence: 0.7,
       status: 'AI_OBSERVED',
       requiresAdditionalCheck: true,
       checkRecommendation: '흰색 화면을 띄워 OLED 잔상(번인) 및 백화 여부 확인 권장',
+      isFallback: true,
+      analysisMethod: 'RULE_BASED_FALLBACK',
     });
   } else if (isBack) {
     observations.push({
       category: 'back',
-      observation: '후면 패널 균열 및 파손 미발견',
+      observation: '[규칙기반 대체추정] 후면 패널 균열 및 파손 미발견 추정 (실제 Vision 관찰 아님)',
       severity: 'NONE',
-      confidence: 0.92,
+      confidence: 0.7,
       status: 'AI_OBSERVED',
-      requiresAdditionalCheck: false,
+      requiresAdditionalCheck: true,
+      isFallback: true,
+      analysisMethod: 'RULE_BASED_FALLBACK',
     });
     observations.push({
       category: 'camera_lens',
-      observation: '카메라 렌즈 표면 크랙 없음',
+      observation: '[규칙기반 대체추정] 카메라 렌즈 표면 크랙 없음 추정',
       severity: 'NONE',
-      confidence: 0.88,
+      confidence: 0.7,
       status: 'AI_OBSERVED',
       requiresAdditionalCheck: true,
       checkRecommendation: '카메라 앱 구동 시 멍 또는 초점 불량 여부 확인 필요',
+      isFallback: true,
+      analysisMethod: 'RULE_BASED_FALLBACK',
     });
   } else if (isFrame) {
     observations.push({
       category: 'frame',
-      observation: '측면 프레임 모서리 찍힘 여부 관찰. 심각한 변형은 발견되지 않음',
+      observation: '[규칙기반 대체추정] 측면 프레임 테두리 모서리 미세 스크래치 가능성',
       severity: 'MINOR',
-      confidence: 0.82,
+      confidence: 0.7,
       status: 'AI_OBSERVED',
       requiresAdditionalCheck: true,
-      checkRecommendation: '모서리 4방향 근접 촬영 권장',
+      checkRecommendation: '모서리 4방향 실물 육안 점검 필요',
+      isFallback: true,
+      analysisMethod: 'RULE_BASED_FALLBACK',
     });
   } else {
     observations.push({
       category: 'general',
-      observation: '외관 형상 기본 관찰 완료',
+      observation: '[규칙기반 대체추정] 일반 외관 표준 기준 적용',
       severity: 'NONE',
-      confidence: 0.8,
+      confidence: 0.65,
       status: 'AI_OBSERVED',
       requiresAdditionalCheck: true,
+      isFallback: true,
+      analysisMethod: 'RULE_BASED_FALLBACK',
     });
   }
 
   return {
     photoQuality: {
-      score: 88,
+      score: 85,
       isAcceptable: true,
-      issues: ['주변부 약간의 조명 반사 존재'],
-      recommendedAction: '모서리 부분과 렌즈 주위를 가까이에서 재촬영하면 더 정확한 판정이 가능합니다.',
+      issues: ['오프라인 기본 규칙 적용됨 (Gemini Vision 미호출/대체)'],
+      recommendedAction: '실제 AI 비전 정밀 판정을 위해 조명이 균일한 환경에서 다시 분석을 실행할 수 있습니다.',
+      isFallback: true,
     },
     observations,
     needsCheckItems: [
@@ -264,6 +285,10 @@ function generateStructuredFallbackAnalysis(device: Device, angle: string): AiVi
     ],
     recommendedAngles: ['전면 액정 정면', '후면 전체', '상하좌우 측면 프레임', '카메라 렌즈 근접'],
     summaryNote:
-      '사진 상 확인 가능한 외관 상태를 분석했습니다. 내부 하드웨어 및 배터리 성능은 실기기 진단 메뉴 확인이 필수적입니다.',
+      '[규칙 기반 대체 추정 결과] Gemini Vision 모델 미호출 또는 오류로 인한 오프라인 기본 규칙 추정치입니다. 실제 AI 비전 관찰 결과와 구분되며, 대면 실물 확인이 필수적입니다.',
+    analysisMethod: 'RULE_BASED_FALLBACK',
+    isFallback: true,
+    modelUsed: 'heuristic-rule-engine-v1',
   };
 }
+

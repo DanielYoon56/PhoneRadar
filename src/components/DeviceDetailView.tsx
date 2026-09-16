@@ -18,6 +18,12 @@ import {
   TrendingDown,
   TrendingUp,
   Percent,
+  Ban,
+  History,
+  Clock,
+  Lock,
+  Unlock,
+  Link2,
 } from 'lucide-react';
 import { APP_CONFIG } from '../config/appConfig.js';
 import { api } from '../services/api.js';
@@ -27,6 +33,7 @@ import {
   PriceRecord,
   TransactionReport,
   ConditionItem,
+  ShareAccessLog,
 } from '../types/index.js';
 
 interface DeviceDetailViewProps {
@@ -42,7 +49,7 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
   onDeviceUpdated,
   onOpenPriceRecordModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'report' | 'ai-vision' | 'conditions' | 'price'>('report');
+  const [activeTab, setActiveTab] = useState<'report' | 'ai-vision' | 'conditions' | 'price' | 'share'>('report');
   const [report, setReport] = useState<TransactionReport | null>(null);
   const [priceAnalysis, setPriceAnalysis] = useState<PriceAnalysisResult | null>(null);
   const [priceRecords, setPriceRecords] = useState<PriceRecord[]>([]);
@@ -50,10 +57,22 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
   const [copySuccess, setCopySuccess] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // Share Token Lifecycle state
+  const [shareLogs, setShareLogs] = useState<ShareAccessLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [validityDaysInput, setValidityDaysInput] = useState(7);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+
   // Load Report & Price Analysis
   useEffect(() => {
     loadAnalysisData();
   }, [device.id]);
+
+  useEffect(() => {
+    if (activeTab === 'share') {
+      loadShareLogs();
+    }
+  }, [activeTab, device.id]);
 
   const loadAnalysisData = async () => {
     setLoading(true);
@@ -70,6 +89,42 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
       console.error('Failed to load analysis details:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadShareLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const res = await api.getShareLogs(device.id);
+      setShareLogs(res.logs || []);
+    } catch (err) {
+      console.error('Failed to load share logs:', err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  const handleGenerateShareToken = async () => {
+    try {
+      const res = await api.generateShareToken(device.id, validityDaysInput);
+      onDeviceUpdated(res.device);
+      setShareFeedback(`공유 링크가 유효기간 ${validityDaysInput}일로 갱신되었습니다.`);
+      setTimeout(() => setShareFeedback(null), 3500);
+      loadShareLogs();
+    } catch (err: any) {
+      alert(err.message || '공유 토큰 발급에 실패했습니다.');
+    }
+  };
+
+  const handleRevokeShareToken = async () => {
+    if (!confirm('이 공유 링크를 즉시 비활성화(취소)하시겠습니까?\n취소 후에는 구매자가 접근 시 취소 안내가 표시됩니다.')) return;
+    try {
+      const res = await api.revokeShareToken(device.id);
+      onDeviceUpdated(res.device);
+      setShareFeedback('공유 링크가 즉시 비활성화(취소)되었습니다.');
+      setTimeout(() => setShareFeedback(null), 3500);
+    } catch (err: any) {
+      alert(err.message || '공유 토큰 취소에 실패했습니다.');
     }
   };
 
@@ -356,6 +411,17 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
           <Coins className="w-4 h-4" />
           <span>시장 시세 비교 풀 ({priceRecords.length})</span>
         </button>
+        <button
+          onClick={() => setActiveTab('share')}
+          className={`px-4 py-2.5 text-xs font-bold transition flex items-center gap-2 border-b-2 -mb-px ${
+            activeTab === 'share'
+              ? 'border-slate-900 text-slate-900'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Share2 className="w-4 h-4" />
+          <span>공유 토큰 및 접근 로그 ({device.shareAccessCount || 0}회)</span>
+        </button>
       </div>
 
       {/* TAB 1: TRANSACTION DECISION REPORT */}
@@ -556,6 +622,21 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
 
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   {/* Photo Quality Feedback */}
+                  <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      분석 엔진:
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        img.isFallback
+                          ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                          : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                      }`}
+                    >
+                      {img.isFallback ? '⚙️ 규칙 기반 Fallback' : '✨ Gemini Vision AI 실사분석'}
+                    </span>
+                  </div>
+
                   {img.qualityAnalysis && (
                     <div className="text-xs space-y-1">
                       <div className="font-semibold text-slate-700 flex items-center justify-between">
@@ -872,6 +953,226 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: SHARE TOKEN LIFECYCLE & ACCESS AUDIT LOGS */}
+      {activeTab === 'share' && (
+        <div className="space-y-6">
+          {/* Share Feedback Toast */}
+          {shareFeedback && (
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-2xs">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                {shareFeedback}
+              </span>
+            </div>
+          )}
+
+          {/* Share Token Overview Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Share2 className="w-4 h-4 text-slate-700" />
+                  공유 토큰 수명주기 및 접근 제어
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  구매자에게 전송할 신뢰 검증 리포트 링크를 안전하게 관리합니다. 원가 및 마진 정보는 자동으로 차단됩니다.
+                </p>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex items-center gap-2">
+                {device.shareIsRevoked ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5">
+                    <Ban className="w-3.5 h-3.5" />
+                    링크 비활성화 (취소됨)
+                  </span>
+                ) : device.shareExpiresAt && new Date(device.shareExpiresAt) < new Date() ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    유효기간 만료됨
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    공유 링크 활성 (정상 열람 가능)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Token URL & Action Controls */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                  구매자 공개 전용 URL
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-800 truncate select-all">
+                    {window.location.origin}/#share={device.shareToken}
+                  </div>
+                  <button
+                    onClick={handleCopyShareLink}
+                    className="shrink-0 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1.5 active:scale-95"
+                  >
+                    <Link2 className="w-4 h-4 text-emerald-400" />
+                    <span>{copySuccess ? '복사 완료!' : 'URL 복사'}</span>
+                  </button>
+                  <a
+                    href={`#share=${device.shareToken}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 px-3 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-4 h-4 text-slate-500" />
+                    <span>미리보기</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Expiry & Lifetime Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                {/* Token Parameters */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-3">
+                  <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <span>토큰 만료일 및 열람 누적</span>
+                    <span className="text-[11px] text-slate-500 font-normal">
+                      현재 토큰: <code className="font-mono text-slate-700">{device.shareToken}</code>
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-xs text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span>만료 예정 일시:</span>
+                      <span className="font-bold text-slate-900">
+                        {device.shareExpiresAt
+                          ? new Date(device.shareExpiresAt).toLocaleString('ko-KR')
+                          : '만료일 없음'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>구매자 총 열람 횟수:</span>
+                      <span className="font-bold text-indigo-700">
+                        {device.shareAccessCount || 0}회
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Regeneration & Revoke Actions */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between space-y-3">
+                  <span className="text-xs font-bold text-slate-800">
+                    토큰 연장 및 즉시 취소 제어
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={validityDaysInput}
+                      onChange={(e) => setValidityDaysInput(Number(e.target.value))}
+                      className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium"
+                    >
+                      <option value={3}>3일간 유효</option>
+                      <option value={7}>7일간 유효</option>
+                      <option value={14}>14일간 유효</option>
+                      <option value={30}>30일간 유효</option>
+                    </select>
+
+                    <button
+                      onClick={handleGenerateShareToken}
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>새 토큰 발급 / 연장</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleRevokeShareToken}
+                    disabled={device.shareIsRevoked}
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
+                      device.shareIsRevoked
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    <span>공유 링크 즉시 비활성화 (취소)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Real-time Access Audit Log Table (Release Gate Requirement 8) */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <History className="w-4 h-4 text-slate-700" />
+                  공유 리포트 접근 감사 로그 (Audit Logs)
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  구매자 또는 외부 사용자가 공유 링크를 열람한 일시와 IP, 단말기 환경 기록입니다.
+                </p>
+              </div>
+              <button
+                onClick={loadShareLogs}
+                disabled={loadingLogs}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingLogs ? 'animate-spin' : ''}`} />
+                <span>새로고침</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[11px] border-b border-slate-200">
+                  <tr>
+                    <th className="px-5 py-3">접속 일시</th>
+                    <th className="px-5 py-3">접속자 IP</th>
+                    <th className="px-5 py-3">접속 상태</th>
+                    <th className="px-5 py-3">브라우저 및 단말기</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {shareLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-8 text-center text-slate-400">
+                        {loadingLogs ? '접근 로그를 조회 중입니다...' : '아직 외부 열람 기록이 없습니다.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    shareLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50/80 transition">
+                        <td className="px-5 py-3 font-semibold text-slate-800">
+                          {new Date(log.timestamp).toLocaleString('ko-KR')}
+                        </td>
+                        <td className="px-5 py-3 font-mono text-slate-600">
+                          {log.ip}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              log.status === 'GRANTED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {log.status === 'GRANTED' ? '열람 허용' : '접근 거부'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-slate-500 max-w-md truncate">
+                          {log.userAgent || '알 수 없음'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

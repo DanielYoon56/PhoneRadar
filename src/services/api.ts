@@ -5,131 +5,182 @@ import {
   TransactionReport,
   UserProfile,
   AdminStats,
+  ShareAccessLog,
 } from '../types/index.js';
 
+let activeUserId: string =
+  typeof window !== 'undefined'
+    ? localStorage.getItem('phonecheck_active_user_id') || 'user-seller-1'
+    : 'user-seller-1';
+
+export function getActiveUserId(): string {
+  return activeUserId;
+}
+
+export function setActiveUserId(id: string): void {
+  activeUserId = id;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('phonecheck_active_user_id', id);
+  }
+}
+
+async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  headers.set('x-user-id', activeUserId);
+
+  const res = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!res.ok) {
+    let errorMsg = `HTTP ${res.status}`;
+    try {
+      const errData = await res.json();
+      errorMsg = errData.error || errData.message || (errData.details ? errData.details.join(', ') : errorMsg);
+    } catch {
+      // fallback
+    }
+    throw new Error(errorMsg);
+  }
+
+  return res.json();
+}
+
 export const api = {
+  getActiveUserId,
+  setActiveUserId,
+
   async getMe(): Promise<UserProfile> {
-    const res = await fetch('/api/auth/me');
-    if (!res.ok) throw new Error('Failed to fetch user');
-    return res.json();
+    return request<UserProfile>('/api/auth/me');
+  },
+
+  async getUsers(): Promise<UserProfile[]> {
+    return request<UserProfile[]>('/api/auth/users');
   },
 
   async updateRole(role: UserProfile['role']): Promise<UserProfile> {
-    const res = await fetch('/api/auth/role', {
+    return request<UserProfile>('/api/auth/role', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
     });
-    if (!res.ok) throw new Error('Failed to update role');
-    return res.json();
   },
 
   async getDevices(): Promise<Device[]> {
-    const res = await fetch('/api/devices');
-    if (!res.ok) throw new Error('Failed to fetch devices');
-    return res.json();
+    return request<Device[]>('/api/devices');
   },
 
   async getDevice(id: string): Promise<Device> {
-    const res = await fetch(`/api/devices/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch device');
-    return res.json();
+    return request<Device>(`/api/devices/${id}`);
   },
 
   async createDevice(data: Partial<Device>): Promise<Device> {
-    const res = await fetch('/api/devices', {
+    return request<Device>('/api/devices', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to create device');
-    return res.json();
   },
 
   async updateDevice(id: string, data: Partial<Device>): Promise<Device> {
-    const res = await fetch(`/api/devices/${id}`, {
+    return request<Device>(`/api/devices/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update device');
-    return res.json();
   },
 
   async deleteDevice(id: string): Promise<void> {
-    const res = await fetch(`/api/devices/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete device');
+    await request(`/api/devices/${id}`, { method: 'DELETE' });
   },
 
   async updateConditionItem(deviceId: string, itemId: string, updates: any): Promise<Device> {
-    const res = await fetch(`/api/devices/${deviceId}/conditions/${itemId}`, {
+    return request<Device>(`/api/devices/${deviceId}/conditions/${itemId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update condition item');
-    return res.json();
   },
 
-  async uploadPhoto(deviceId: string, url: string, angle: string): Promise<{ device: Device; aiAnalysis: any }> {
-    const res = await fetch(`/api/devices/${deviceId}/photos`, {
+  async uploadPhoto(deviceId: string, url: string, angle: string): Promise<{ device: Device; aiAnalysis: any; image: any }> {
+    return request<{ device: Device; aiAnalysis: any; image: any }>(`/api/devices/${deviceId}/photos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, angle }),
     });
-    if (!res.ok) throw new Error('Failed to upload photo and run AI analysis');
-    return res.json();
   },
 
   async deletePhoto(deviceId: string, photoId: string): Promise<Device> {
-    const res = await fetch(`/api/devices/${deviceId}/photos/${photoId}`, {
+    const data = await request<{ success: boolean; device: Device }>(`/api/devices/${deviceId}/photos/${photoId}`, {
       method: 'DELETE',
     });
-    if (!res.ok) throw new Error('Failed to delete photo');
-    const data = await res.json();
     return data.device;
   },
 
   async getPriceAnalysis(deviceId: string): Promise<PriceAnalysisResult> {
-    const res = await fetch(`/api/devices/${deviceId}/price-analysis`);
-    if (!res.ok) throw new Error('Failed to fetch price analysis');
-    return res.json();
+    return request<PriceAnalysisResult>(`/api/devices/${deviceId}/price-analysis`);
   },
 
-  async getPriceRecords(model?: string, storage?: string): Promise<PriceRecord[]> {
+  async getPriceRecords(model?: string, storage?: string, type?: string): Promise<PriceRecord[]> {
     const params = new URLSearchParams();
     if (model) params.set('model', model);
     if (storage) params.set('storage', storage);
-    const res = await fetch(`/api/prices/records?${params.toString()}`);
-    if (!res.ok) throw new Error('Failed to fetch price records');
-    return res.json();
+    if (type) params.set('type', type);
+    return request<PriceRecord[]>(`/api/prices/records?${params.toString()}`);
   },
 
   async addPriceRecord(record: Partial<PriceRecord>): Promise<PriceRecord> {
-    const res = await fetch('/api/prices/records', {
+    return request<PriceRecord>('/api/prices/records', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record),
     });
-    if (!res.ok) throw new Error('Failed to add price record');
-    return res.json();
   },
 
   async getReport(deviceId: string): Promise<TransactionReport> {
-    const res = await fetch(`/api/devices/${deviceId}/report`);
-    if (!res.ok) throw new Error('Failed to fetch report');
-    return res.json();
+    return request<TransactionReport>(`/api/devices/${deviceId}/report`);
   },
 
-  async getSharedReport(shareToken: string): Promise<{ device: Device; report: TransactionReport }> {
+  // Share Token Lifecycle APIs
+  async generateShareToken(deviceId: string, validityDays: number = 7): Promise<{ success: boolean; shareToken: string; shareExpiresAt: string; device: Device }> {
+    return request<{ success: boolean; shareToken: string; shareExpiresAt: string; device: Device }>(`/api/devices/${deviceId}/share/generate`, {
+      method: 'POST',
+      body: JSON.stringify({ validityDays }),
+    });
+  },
+
+  async revokeShareToken(deviceId: string): Promise<{ success: boolean; shareIsRevoked: boolean; device: Device }> {
+    return request<{ success: boolean; shareIsRevoked: boolean; device: Device }>(`/api/devices/${deviceId}/share/revoke`, {
+      method: 'POST',
+    });
+  },
+
+  async getShareLogs(deviceId: string): Promise<{ deviceId: string; totalAccessCount: number; logs: ShareAccessLog[] }> {
+    return request<{ deviceId: string; totalAccessCount: number; logs: ShareAccessLog[] }>(`/api/devices/${deviceId}/share/logs`);
+  },
+
+  async getSharedReport(shareToken: string): Promise<{ device: Device; report: TransactionReport; isSharedView: boolean }> {
     const res = await fetch(`/api/share/${shareToken}`);
-    if (!res.ok) throw new Error('Failed to fetch shared report');
+    if (!res.ok) {
+      let msg = '공유된 리포트를 불러올 수 없습니다.';
+      try {
+        const d = await res.json();
+        if (d.error) msg = d.error;
+      } catch {}
+      throw new Error(msg);
+    }
     return res.json();
   },
 
+  // Admin APIs
   async getAdminStats(): Promise<AdminStats> {
-    const res = await fetch('/api/admin/stats');
-    if (!res.ok) throw new Error('Failed to fetch admin stats');
-    return res.json();
+    return request<AdminStats>('/api/admin/stats');
+  },
+
+  async getAdminDevices(): Promise<Device[]> {
+    return request<Device[]>('/api/admin/devices');
+  },
+
+  async getAdminUsers(): Promise<UserProfile[]> {
+    return request<UserProfile[]>('/api/admin/users');
   },
 };
+

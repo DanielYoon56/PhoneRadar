@@ -14,6 +14,7 @@ import { Device, PriceRecord, UserProfile, UserRole } from './types/index.js';
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'price-intel' | 'pricing' | 'admin'>('dashboard');
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,9 +45,14 @@ export default function App() {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [u, devList] = await Promise.all([api.getMe(), api.getDevices()]);
+      const [u, devList, userList] = await Promise.all([
+        api.getMe(),
+        api.getDevices(),
+        api.getUsers().catch(() => []),
+      ]);
       setUser(u);
       setDevices(devList);
+      setAvailableUsers(userList);
     } catch (err) {
       console.error('Initial load failed:', err);
     } finally {
@@ -54,10 +60,19 @@ export default function App() {
     }
   };
 
+  const handleSwitchUser = async (userId: string) => {
+    api.setActiveUserId(userId);
+    setSelectedDevice(null);
+    await loadInitialData();
+  };
+
   const handleRoleChange = async (role: UserRole) => {
     try {
       const updated = await api.updateRole(role);
       setUser(updated);
+      // Reload devices because if role is ADMIN, user can now inspect all devices
+      const devList = await api.getDevices();
+      setDevices(devList);
     } catch (err) {
       console.error('Failed to change role:', err);
     }
@@ -81,8 +96,8 @@ export default function App() {
       if (selectedDevice?.id === id) {
         setSelectedDevice(null);
       }
-    } catch (err) {
-      alert('기기 삭제 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      alert(err.message || '기기 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -109,6 +124,8 @@ export default function App() {
         }}
         onOpenNewDevice={() => setIsNewDeviceOpen(true)}
         user={user}
+        availableUsers={availableUsers}
+        onSwitchUser={handleSwitchUser}
         onRoleChange={handleRoleChange}
       />
 
@@ -144,7 +161,9 @@ export default function App() {
               />
             )}
             {currentTab === 'pricing' && <PricingView user={user} />}
-            {currentTab === 'admin' && <AdminView />}
+            {currentTab === 'admin' && (
+              <AdminView currentUser={user} onSwitchUser={handleSwitchUser} />
+            )}
           </>
         )}
       </main>

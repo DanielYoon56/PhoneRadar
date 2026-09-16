@@ -1148,23 +1148,23 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
                       </td>
                     </tr>
                   ) : (
-                    shareLogs.map((log) => (
+                    shareLogs.map((log: any) => (
                       <tr key={log.id} className="hover:bg-slate-50/80 transition">
                         <td className="px-5 py-3 font-semibold text-slate-800">
-                          {new Date(log.timestamp).toLocaleString('ko-KR')}
+                          {new Date(log.accessedAt || log.timestamp || Date.now()).toLocaleString('ko-KR')}
                         </td>
                         <td className="px-5 py-3 font-mono text-slate-600">
-                          {log.ip}
+                          {log.ip || '127.0.0.1'}
                         </td>
                         <td className="px-5 py-3">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              log.status === 'GRANTED'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-rose-100 text-rose-800'
+                              log.status === 'DENIED' || log.status === 'REVOKED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
-                            {log.status === 'GRANTED' ? '열람 허용' : '접근 거부'}
+                            {log.status === 'DENIED' || log.status === 'REVOKED' ? '접근 차단' : '열람 허용'}
                           </span>
                         </td>
                         <td className="px-5 py-3 text-slate-500 max-w-md truncate">

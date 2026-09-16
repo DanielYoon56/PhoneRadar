@@ -295,7 +295,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onSwitchUser 
                   </td>
                   <td className="px-5 py-3 font-mono text-slate-600">
                     <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
-                      {dev.ownerId || 'system'}
+                      {dev.userId || (dev as any).ownerId || 'system'}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-slate-600">

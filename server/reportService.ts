@@ -31,16 +31,17 @@ export function generateTransactionReport(
     }
   }
 
+  // Section 4: Purely administrative, account lock, and network trade security points
+  // Distinct from Section 3's device hardware condition items (prevents redundancy)
   const riskAndCheckPoints: string[] = [
-    '통신사 정상 해지 및 25% 선택약정 할인 가능 여부 (이동전화 단말기 자급제 사이트 IMEI 조회 권장)',
-    'OLED 디스플레이 잔상(번인) 및 백화 현상: 흰색 전체 화면에서 픽셀 열화 직접 육안 점검',
-    '생체인식 센서(Face ID / 지문인식)의 실제 등록 및 잠금 해제 동작 검증',
-    '배터리 성능 최대치 수치 및 급방전 여부 (설정 > 배터리 메뉴에서 직접 확인)',
-    '애플 아이클라우드 / 삼성 계정 로그아웃 및 기기 완전 초기화(FRP 락 해제) 확인',
+    '통신사 전산 정상 해지 및 25% 선택약정 할인 가능 여부 (이동전화 단말기 자급제 사이트 IMEI 조회 필수)',
+    '계정 귀속 락(애플 iCloud 활성화 잠금 / 구글·삼성 FRP 락) 완전 해제 및 기기 초기화 상태 확인',
+    '현장에서 구매자 본인 유심(USIM/eSIM) 장착 후 음성통화 수발신 및 모바일 데이터 연결 확인',
+    '생체인식 보안 센서(Face ID / 지문인식)의 실제 사용자 등록 및 잠금 해제 반응 속도 점검',
   ];
 
   if (device.conditions.some((c) => c.category === 'REPAIR' && c.status === 'NEEDS_CHECK')) {
-    riskAndCheckPoints.push('부품 교체 이력: 설정 > 일반 > 정보 메뉴에서 정품 디스플레이/배터리 경고문구 유무 확인');
+    riskAndCheckPoints.push('사설 수리 경고: 설정 > 일반 > 정보 메뉴에서 정품 미인증 부품 알림 유무 확인');
   }
 
   const priceRangeText =

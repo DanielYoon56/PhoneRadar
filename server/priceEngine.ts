@@ -23,7 +23,15 @@ function calculateCategorySummary(records: PriceRecord[], description: string): 
 }
 
 /**
- * Checks if a price record is stale (older than 90 days from collection date)
+ * 사업계획서 정책 기준 가격 데이터 유효기간 (30일)
+ * 급변하는 중고 스마트폰 감가상각 및 시세 변동성을 신속히 반영하기 위해
+ * 수집일로부터 30일이 경과한 데이터는 Stale(만료) 처리되어 실시간 시세 산정에서 제외됩니다.
+ */
+export const PRICE_RECORD_VALIDITY_DAYS = 30;
+
+/**
+ * Checks if a price record is stale (older than 30 days from collection date)
+ * 사업계획서 정책 준수: 수집일로부터 30일을 초과한 데이터는 만료로 판정
  */
 export function isPriceRecordStale(record: PriceRecord, referenceDate = new Date()): boolean {
   if (record.isStale) return true;
@@ -31,7 +39,7 @@ export function isPriceRecordStale(record: PriceRecord, referenceDate = new Date
   const collected = new Date(record.collectedAt).getTime();
   if (isNaN(collected)) return false;
   const diffDays = (referenceDate.getTime() - collected) / (1000 * 60 * 60 * 24);
-  return diffDays > 90;
+  return diffDays > PRICE_RECORD_VALIDITY_DAYS;
 }
 
 /**
@@ -119,8 +127,12 @@ export function validatePriceRecord(
     return { valid: false, errors };
   }
 
-  // Calculate default 90-day expiration
-  const expiresAt = new Date(collectedAtDate.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  // Calculate default expiration based on business policy (30 days)
+  const expiresAt = new Date(
+    collectedAtDate.getTime() + PRICE_RECORD_VALIDITY_DAYS * 24 * 60 * 60 * 1000
+  )
+    .toISOString()
+    .split('T')[0];
 
   const sanitized: Partial<PriceRecord> = {
     source: record.source.trim(),
@@ -158,7 +170,7 @@ export function analyzeDevicePrice(
       (device.canonicalId && r.productId === device.canonicalId) ||
       r.model.toLowerCase() === device.model.toLowerCase();
     if (!isModelMatch) return false;
-    // Mark staleness if older than 90 days
+    // Mark staleness if older than 30 days (사업계획서 정책 준수)
     r.isStale = isPriceRecordStale(r);
     return true;
   });
@@ -195,7 +207,7 @@ export function analyzeDevicePrice(
       referenceDate: new Date().toISOString().split('T')[0],
       sourcesUsed: [],
       hasTransactionPrices: false,
-      aiPriceJudgement: '현재 기기와 비교할 수 있는 유효 가격자료(90일 이내)가 충분하지 않아 신뢰도 높은 가격 범위를 산출하기 어렵습니다.',
+      aiPriceJudgement: `현재 기기와 비교할 수 있는 유효 가격자료(${PRICE_RECORD_VALIDITY_DAYS}일 이내)가 충분하지 않아 신뢰도 높은 가격 범위를 산출하기 어렵습니다.`,
       notes: [
         '자체 가격 데이터베이스에 동일 모델의 유효 비교자료가 미등록 상태입니다.',
         '판매자 또는 제휴 파트너가 직접 입력한 비교가격이나 매입자료를 등록하시면 즉시 분리 비교가 가능합니다.',
@@ -283,7 +295,7 @@ export function analyzeDevicePrice(
 
   const staleCount = matchingRecords.filter((r) => r.isStale).length;
   if (staleCount > 0) {
-    notes.push(`* 90일 경과 만료(Stale) 데이터 ${staleCount}건은 실시간 시세 산출에서 자동으로 제외되었습니다.`);
+    notes.push(`* ${PRICE_RECORD_VALIDITY_DAYS}일 경과 만료(Stale) 데이터 ${staleCount}건은 실시간 시세 산출에서 자동으로 제외되었습니다.`);
   }
 
   const marginEstimate =

@@ -8,6 +8,7 @@ import {
   FileText,
   Info,
   ExternalLink,
+  Lock,
 } from 'lucide-react';
 import { APP_CONFIG } from '../config/appConfig.js';
 import { api } from '../services/api.js';
@@ -131,43 +132,75 @@ export const SharedReportModal: React.FC<SharedReportModalProps> = ({
                 </p>
               </div>
 
-              {/* Verified vs Needs Check */}
+              {/* Unified Verification & Trade Checkpoints */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40">
-                  <div className="text-xs font-bold text-emerald-900 mb-2 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    확인된 항목
+                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 flex flex-col justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-emerald-900 mb-2.5 flex items-center gap-1.5 pb-1.5 border-b border-emerald-200/60">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      사전 확인 완료 항목 ({data.report.conditionSummary.verifiedItems.length}건)
+                    </div>
+                    <ul className="text-xs text-emerald-800 space-y-1.5">
+                      {data.report.conditionSummary.verifiedItems.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 font-bold">✓</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="text-xs text-emerald-800 space-y-1">
-                    {data.report.conditionSummary.verifiedItems.map((item, idx) => (
-                      <li key={idx}>✓ {item}</li>
-                    ))}
-                  </ul>
+                  <div className="mt-3 pt-2 border-t border-emerald-200/60 text-[11px] text-emerald-700">
+                    * 사진 및 자가보고를 통해 사전 확인된 정상 항목입니다.
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40">
-                  <div className="text-xs font-bold text-amber-900 mb-2 flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    거래 전 대면 확인 필요
+                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-3.5">
+                  {/* 1. Device In-person Check */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between pb-1 border-b border-amber-200/70">
+                      <div className="text-xs font-bold text-amber-900 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        1) 기기 외관·기능 대면 확인 ({data.report.conditionSummary.needsCheckItems.length}건)
+                      </div>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                        단말기 상태
+                      </span>
+                    </div>
+                    <ul className="text-xs text-amber-900 space-y-1">
+                      {data.report.conditionSummary.needsCheckItems.length === 0 ? (
+                        <li className="italic text-amber-700">사전 미확보 항목 없음</li>
+                      ) : (
+                        data.report.conditionSummary.needsCheckItems.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-1">
+                            <span className="font-bold text-amber-600">!</span>
+                            <span>{item}</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
                   </div>
-                  <ul className="text-xs text-amber-800 space-y-1">
-                    {data.report.conditionSummary.needsCheckItems.map((item, idx) => (
-                      <li key={idx}>! {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
 
-              {/* Risk & Checkpoints */}
-              <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
-                <div className="text-xs font-bold text-emerald-400">
-                  구매자가 반드시 직접 점검해야 할 항목:
+                  {/* 2. Trade Security & Account Lock */}
+                  <div className="pt-2.5 border-t border-amber-200/80 space-y-1.5">
+                    <div className="flex items-center justify-between pb-1 border-b border-amber-200/60">
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-slate-700" />
+                        2) 현장 거래 안전 & 락 방지 수칙
+                      </div>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-800">
+                        행정 절차
+                      </span>
+                    </div>
+                    <ul className="text-xs text-slate-700 space-y-1 pt-0.5">
+                      {data.report.riskAndCheckPoints.map((pt, idx) => (
+                        <li key={idx} className="leading-relaxed flex items-start gap-1.5">
+                          <span className="text-amber-700 font-bold shrink-0">•</span>
+                          <span>{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <ul className="text-xs text-slate-300 space-y-1">
-                  {data.report.riskAndCheckPoints.map((pt, idx) => (
-                    <li key={idx}>• {pt}</li>
-                  ))}
-                </ul>
               </div>
 
               {/* Legal Disclaimer Box */}

@@ -488,58 +488,82 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Condition Verification Items */}
+          {/* Section 3: Condition Verification & Trade Checkpoints (Unified) */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900">
-              3. Condition & AI Image Observations
+              3. Condition & Trade Checkpoints (상태 검증 및 거래 필수 체크리스트)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
-                <div className="text-xs font-bold text-emerald-800 mb-2 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  확인 완료된 항목 ({report.conditionSummary.verifiedItems.length}건)
+              {/* Left Column: Verified Items */}
+              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-bold text-emerald-800 mb-2.5 flex items-center gap-1.5 pb-1.5 border-b border-emerald-200/60">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    사전 확인 완료 항목 ({report.conditionSummary.verifiedItems.length}건)
+                  </div>
+                  <ul className="text-xs text-emerald-900 space-y-1.5">
+                    {report.conditionSummary.verifiedItems.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5 leading-relaxed">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="text-xs text-emerald-900 space-y-1">
-                  {report.conditionSummary.verifiedItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <span>✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-4 pt-2.5 border-t border-emerald-200/60 text-[11px] text-emerald-700">
+                  * 사진 정밀 분석 및 자가보고를 통해 검증된 정상 항목입니다.
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50">
-                <div className="text-xs font-bold text-amber-800 mb-2 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  거래 전 추가 점검 필요 항목 ({report.conditionSummary.needsCheckItems.length}건)
+              {/* Right Column: Unified Pending Checkpoints (Device In-person + Trade Security) */}
+              <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-4">
+                {/* 1. Device Specific Physical Checkpoints */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-amber-200/70">
+                    <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      1) 기기 외관·기능 대면 확인 ({report.conditionSummary.needsCheckItems.length}건)
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                      단말기 상태
+                    </span>
+                  </div>
+                  <ul className="text-xs text-amber-900 space-y-1">
+                    {report.conditionSummary.needsCheckItems.length === 0 ? (
+                      <li className="text-amber-700 italic">모든 외관·상태 기본 항목이 사전 확인되었습니다.</li>
+                    ) : (
+                      report.conditionSummary.needsCheckItems.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 leading-relaxed">
+                          <span className="font-bold text-amber-600 shrink-0">!</span>
+                          <span>{item}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
                 </div>
-                <ul className="text-xs text-amber-900 space-y-1">
-                  {report.conditionSummary.needsCheckItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5">
-                      <span>!</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+
+                {/* 2. Trade Security & Account Lock Protocol (Merged) */}
+                <div className="pt-3 border-t border-amber-200/80 space-y-2">
+                  <div className="flex items-center justify-between pb-1 border-b border-amber-200/60">
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                      2) 현장 거래 안전 & 락 방지 수칙
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
+                      행정·보안 절차
+                    </span>
+                  </div>
+                  <ul className="text-xs text-slate-700 space-y-1.5 pt-0.5">
+                    {report.riskAndCheckPoints.map((pt, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5 leading-relaxed">
+                        <span className="text-amber-700 font-bold shrink-0 mt-0.5">•</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Section 4: Risk & Checklist */}
-          <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              4. 거래 전 필수 체크포인트 (Risk & Check Points)
-            </h3>
-            <ul className="text-xs text-slate-300 space-y-1.5 pt-1">
-              {report.riskAndCheckPoints.map((pt, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 font-bold">•</span>
-                  <span>{pt}</span>
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* Final Summary Statement */}

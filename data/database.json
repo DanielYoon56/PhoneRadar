@@ -54,7 +54,7 @@
       "conditionGradeEstimated": "A",
       "status": "REPORT_READY",
       "createdAt": "2026-09-14T10:20:00Z",
-      "updatedAt": "2026-09-16T15:51:05.961Z",
+      "updatedAt": "2026-09-16T15:56:49.318Z",
       "askingPrice": 1140000,
       "buyPrice": 980000,
       "referencePrice": 1150000,
@@ -62,7 +62,7 @@
       "shareToken": "test-expired-token-xyz",
       "shareExpiresAt": "2023-01-01T00:00:00.000Z",
       "shareIsRevoked": false,
-      "shareAccessCount": 5,
+      "shareAccessCount": 6,
       "images": [
         {
           "id": "img-1",
@@ -624,6 +624,44 @@
   "reports": [],
   "auditLogs": [
     {
+      "id": "log-1789574209338-y398",
+      "action": "DELETE_DEVICE",
+      "deviceId": "dev-1789574209330",
+      "timestamp": "2026-09-16T15:56:49.338Z"
+    },
+    {
+      "id": "log-1789574209330-ebve",
+      "action": "CREATE_DEVICE",
+      "deviceId": "dev-1789574209330",
+      "meta": {
+        "model": "iPhone 15 Pro",
+        "userId": "user-seller-1"
+      },
+      "timestamp": "2026-09-16T15:56:49.330Z"
+    },
+    {
+      "id": "log-1789574209318-lwjt",
+      "action": "UPDATE_DEVICE",
+      "deviceId": "dev-1",
+      "timestamp": "2026-09-16T15:56:49.318Z"
+    },
+    {
+      "id": "log-1789574209309-tof2",
+      "action": "REVOKE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "timestamp": "2026-09-16T15:56:49.309Z"
+    },
+    {
+      "id": "log-1789574209283-fjcl",
+      "action": "GENERATE_SHARE_TOKEN",
+      "deviceId": "dev-1",
+      "meta": {
+        "token": "share-mu4aa1ab-0dx6k",
+        "expiresAt": "2026-09-23T15:56:49.283Z"
+      },
+      "timestamp": "2026-09-16T15:56:49.283Z"
+    },
+    {
       "id": "log-1789573865979-0oc5",
       "action": "DELETE_DEVICE",
       "deviceId": "dev-1789573865972",
@@ -696,6 +734,14 @@
   ],
   "shareAccessLogs": [
     {
+      "id": "sal-1789574209287-8hac",
+      "deviceId": "dev-1",
+      "shareToken": "share-mu4aa1ab-0dx6k",
+      "accessedAt": "2026-09-16T15:56:49.287Z",
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
       "id": "sal-1789573865949-hia0",
       "deviceId": "dev-1",
       "shareToken": "share-mu4a2od3-v2s1f",
@@ -712,5 +758,5 @@
       "userAgent": "node"
     }
   ],
-  "savedAt": "2026-09-16T15:51:05.979Z"
+  "savedAt": "2026-09-16T15:56:49.338Z"
 }

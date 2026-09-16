@@ -35,12 +35,14 @@ import {
   ConditionItem,
   ShareAccessLog,
 } from '../types/index.js';
+import { PrintReportModal } from './PrintReportModal.js';
 
 interface DeviceDetailViewProps {
   device: Device;
   onBack: () => void;
   onDeviceUpdated: (updated: Device) => void;
   onOpenPriceRecordModal: (device: Device) => void;
+  onOpenShareModal: (token: string) => void;
 }
 
 export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
@@ -48,6 +50,7 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
   onBack,
   onDeviceUpdated,
   onOpenPriceRecordModal,
+  onOpenShareModal,
 }) => {
   const [activeTab, setActiveTab] = useState<'report' | 'ai-vision' | 'conditions' | 'price' | 'share'>('report');
   const [report, setReport] = useState<TransactionReport | null>(null);
@@ -62,6 +65,7 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [validityDaysInput, setValidityDaysInput] = useState(7);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Load Report & Price Analysis
   useEffect(() => {
@@ -128,15 +132,74 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
     }
   };
 
-  const handleCopyShareLink = () => {
-    const url = `${window.location.origin}/#share=${device.shareToken}`;
-    navigator.clipboard.writeText(url);
+  const handleOpenShareReport = async () => {
+    let token = device.shareToken;
+    if (!token || device.shareIsRevoked) {
+      try {
+        const res = await api.generateShareToken(device.id, validityDaysInput || 30);
+        onDeviceUpdated(res.device);
+        token = res.device.shareToken;
+      } catch (err) {
+        console.error('Failed to generate token on open:', err);
+      }
+    }
+    const finalToken = token || device.shareToken || `share-${device.id}`;
+    window.location.hash = `share=${finalToken}`;
+    onOpenShareModal(finalToken);
+  };
+
+  const handleCopyShareLink = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    let token = device.shareToken;
+    if (!token || device.shareIsRevoked) {
+      try {
+        const res = await api.generateShareToken(device.id, validityDaysInput || 30);
+        onDeviceUpdated(res.device);
+        token = res.device.shareToken;
+      } catch (err) {
+        console.error('Failed to generate token on copy:', err);
+      }
+    }
+    const finalToken = token || device.shareToken || `share-${device.id}`;
+    const shareUrl = `${window.location.origin}/#share=${finalToken}`;
+
+    let copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(textArea);
+      } catch (err) {
+        console.error('execCommand copy failed:', err);
+      }
+    }
+
     setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 3000);
+    setShareFeedback('공유 링크가 클립보드에 복사되었습니다.');
+    setTimeout(() => {
+      setCopySuccess(false);
+      setShareFeedback(null);
+    }, 3500);
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab('report');
+    setIsPrintModalOpen(true);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, angle: string) => {
@@ -196,23 +259,52 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
           <span>기기 목록으로 돌아가기</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={handleCopyShareLink}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium transition shadow-2xs"
+            id="btn-open-share-report"
+            onClick={handleOpenShareReport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 bg-blue-50/80 hover:bg-blue-100 text-xs font-semibold transition shadow-2xs cursor-pointer active:scale-95"
+            title="구매자가 열람할 수 있는 정식 공유 리포트를 직접 엽니다."
           >
-            <Share2 className="w-3.5 h-3.5 text-slate-500" />
-            <span>{copySuccess ? '공유 링크 복사됨!' : '구매자 공유 링크'}</span>
+            <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+            <span>구매자 공유 리포트 열기</span>
           </button>
           <button
+            id="btn-copy-share-link"
+            onClick={handleCopyShareLink}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium transition shadow-2xs cursor-pointer active:scale-95"
+            title="구매자에게 전달할 리포트 링크를 복사합니다."
+          >
+            <Share2 className="w-3.5 h-3.5 text-slate-500" />
+            <span>{copySuccess ? '링크 복사됨!' : '링크 복사'}</span>
+          </button>
+          <button
+            id="btn-print-report"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium transition shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-medium transition shadow-2xs cursor-pointer active:scale-95"
+            title="거래 판단 리포트를 인쇄하거나 PDF로 저장합니다."
           >
             <Printer className="w-3.5 h-3.5 text-slate-500" />
             <span>PDF 리포트 출력</span>
           </button>
         </div>
       </div>
+
+      {/* Global Feedback Banner */}
+      {shareFeedback && (
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+            {shareFeedback}
+          </span>
+          <button
+            onClick={() => setShareFeedback(null)}
+            className="text-blue-500 hover:text-blue-800 text-xs cursor-pointer ml-4 font-normal"
+          >
+            닫기
+          </button>
+        </div>
+      )}
 
       {/* Device Header Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -1048,15 +1140,15 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
                     <Link2 className="w-4 h-4 text-emerald-400" />
                     <span>{copySuccess ? '복사 완료!' : 'URL 복사'}</span>
                   </button>
-                  <a
-                    href={`#share=${device.shareToken}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 px-3 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-medium transition flex items-center gap-1.5"
+                  <button
+                    type="button"
+                    onClick={handleOpenShareReport}
+                    className="shrink-0 px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 bg-blue-50/70 hover:bg-blue-100 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="구매자가 보는 정식 공유 리포트 모달을 미리보기로 엽니다."
                   >
-                    <ExternalLink className="w-4 h-4 text-slate-500" />
-                    <span>미리보기</span>
-                  </a>
+                    <ExternalLink className="w-4 h-4 text-blue-600" />
+                    <span>리포트 미리보기</span>
+                  </button>
                 </div>
               </div>
 
@@ -1203,6 +1295,15 @@ export const DeviceDetailView: React.FC<DeviceDetailViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Print & PDF Export Modal */}
+      <PrintReportModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        device={device}
+        report={report}
+        priceAnalysis={priceAnalysis}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
   Info,
   ExternalLink,
   Lock,
+  Printer,
 } from 'lucide-react';
 import { APP_CONFIG } from '../config/appConfig.js';
 import { api } from '../services/api.js';
@@ -62,12 +63,24 @@ export const SharedReportModal: React.FC<SharedReportModalProps> = ({
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/share/${shareToken}/print`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-semibold transition cursor-pointer shadow-2xs"
+              title="새 창에서 인쇄 및 PDF로 저장"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-600" />
+              <span>PDF / 인쇄</span>
+            </a>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

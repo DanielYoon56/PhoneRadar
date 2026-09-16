@@ -6,6 +6,7 @@ import { store } from './server/store.js';
 import { analyzeDeviceImageWithGemini } from './server/aiService.js';
 import { analyzeDevicePrice, validatePriceRecord } from './server/priceEngine.js';
 import { generateTransactionReport } from './server/reportService.js';
+import { renderPrintableReportHtml } from './server/printRenderer.js';
 import { resolveCanonicalModel } from './src/config/appConfig.js';
 import { UserProfile, Device, UserRole } from './src/types/index.js';
 
@@ -469,6 +470,42 @@ async function startServer() {
       report: sanitizedReport,
       isSharedView: true,
     });
+  });
+
+  // Dedicated Print & PDF Document Endpoints (Accessible via new tab, immune to iframe sandboxing)
+  app.get('/api/devices/:id/print', (req, res) => {
+    const dev = store.getDevice(req.params.id) || store.getDevices().find((d) => d.id === req.params.id);
+    if (!dev) {
+      return res.status(404).send('<!DOCTYPE html><html><body><h3>단말기 정보를 찾을 수 없습니다.</h3></body></html>');
+    }
+
+    const records = store.getPriceRecords(dev.canonicalId, dev.model, dev.storage);
+    const priceAnalysis = analyzeDevicePrice(dev, records);
+    const report = generateTransactionReport(dev, priceAnalysis);
+    const html = renderPrintableReportHtml(dev, report, priceAnalysis);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  });
+
+  app.get('/api/share/:shareToken/print', (req, res) => {
+    const accessResult = store.recordShareAccess(req.params.shareToken, {
+      ip: req.ip || req.socket.remoteAddress || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'Unknown Client',
+    });
+
+    if (!accessResult.valid || !accessResult.device) {
+      return res.status(404).send('<!DOCTYPE html><html><body><h3>유효하지 않거나 만료된 공유 링크입니다.</h3></body></html>');
+    }
+
+    const dev = accessResult.device;
+    const records = store.getPriceRecords(dev.canonicalId, dev.model, dev.storage);
+    const priceAnalysis = analyzeDevicePrice(dev, records);
+    const report = generateTransactionReport(dev, priceAnalysis);
+    const html = renderPrintableReportHtml(dev, report, priceAnalysis);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
   });
 
   // Admin Metrics & Management (Requirement 3)

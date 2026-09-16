@@ -141,6 +141,7 @@ export default function App() {
             onBack={() => setSelectedDevice(null)}
             onDeviceUpdated={handleDeviceUpdated}
             onOpenPriceRecordModal={handleOpenPriceModalForDevice}
+            onOpenShareModal={(token) => setShareTokenModal(token)}
           />
         ) : (
           <>
